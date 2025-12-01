@@ -1,0 +1,73 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  // output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model users {
+  id                  Int                 @id @default(autoincrement())
+  email               String              @unique
+  password            String
+  full_name           String
+  phone               String              @unique
+  role                String              @default("customer")
+  created_at          DateTime            @default(now())
+
+  // relasi
+  bookings            bookings[]
+}
+
+model bookings {
+  id                  Int                 @id @default(autoincrement())
+  customer_id         Int
+  field_id            Int
+  booking_date        DateTime            
+  start_time          DateTime
+  end_time            DateTime
+  duration            Int
+  total_price         Decimal
+  status              String              @default("pending")
+  created_at          DateTime            @default(now())
+
+  // relasi
+  customer            users               @relation(fields: [customer_id], references: [id])
+  field               field               @relation(fields: [field_id], references: [id])
+}
+
+model field {
+  id                  Int                 @id @default(autoincrement())
+  name                String
+  field_type          String
+  price_per_hour      Decimal
+  is_active           Boolean             @default(true)
+  description         String
+  images              Json[]              @default([])
+  created_at          DateTime            @default(now())
+
+  // relasi
+  bookings            bookings[]
+  schedules           schedules[]
+}
+
+model schedules {
+  id                  Int                 @id @default(autoincrement())
+  field_id            Int
+  day_of_week         Int                 // 0-6, 0=Minggu
+  start_time          DateTime
+  end_time            DateTime
+  is_available        Boolean             @default(false) // untuk maintenance/tutup
+  created_at          DateTime            @default(now())
+
+  // relasi
+  field               field               @relation(fields: [field_id], references: [id])
+}
