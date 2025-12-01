@@ -3,13 +3,15 @@ version: '3.8'
 services:
   redis:
     image: redis:7.2-alpine
-    container_name: futsal-app
+    container_name: futsal-redis
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes
     restart: unless-stopped
+    networks:
+      - app-network
 
   minio:
     image: minio/minio:RELEASE.2025-04-22T22-12-26Z
@@ -24,6 +26,8 @@ services:
       - minio_data:/data
     command: server /data --console-address ":9001"
     restart: unless-stopped
+    networks:
+      - app-network
 
   postgres:
     image: postgres:18
@@ -33,16 +37,17 @@ services:
       POSTGRES_USER: futsal_app_project
       POSTGRES_PASSWORD: rizki
     ports:
-      - "5433:5432"
+      - "5435:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql
+      - postgres_data:/var/lib/postgresql  # This is the correct path for PG18
     networks:
       - app-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U rizki -d futsal-db"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
+      test: ["CMD-SHELL", "pg_isready -U futsal_app_project -d futsal-db"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
     restart: unless-stopped
 
 volumes:
