@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800">
+    <defs>
+        <linearGradient id="g" x1="0" x2="1">
+            <stop offset="0" stop-color="#6366f1" />
+            <stop offset="1" stop-color="#4f46e5" />
+        </linearGradient>
+    </defs>
+    <rect width="1200" height="800" fill="url(#g)" />
+    <g fill="#ffffff" opacity="0.9">
+        <rect x="80" y="120" width="440" height="240" rx="12" />
+        <rect x="680" y="120" width="440" height="240" rx="12" />
+        <rect x="80" y="420" width="440" height="240" rx="12" />
+        <rect x="680" y="420" width="440" height="240" rx="12" />
+    </g>
+    <g fill="#fff" opacity="0.85">
+        <circle cx="300" cy="240" r="38" />
+        <rect x="260" y="290" width="80" height="10" rx="5" />
+    </g>
+    <text x="600" y="680" fill="#ffffff" font-family="sans-serif" font-size="36"
+        text-anchor="middle">Hero image placeholder</text>
+</svg>
