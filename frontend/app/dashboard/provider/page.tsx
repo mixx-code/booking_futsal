@@ -8,15 +8,18 @@ import {
   getAllBookings,
   getFields,
   createField,
+  createSchedule,
+  cancelBooking,
   updateBookingStatus,
   formatPrice,
   formatDate,
   formatTime,
   Booking,
   Field,
+  Schedule,
 } from "../../lib/api";
 
-type TabType = "overview" | "bookings" | "fields" | "create";
+type TabType = "overview" | "bookings" | "fields" | "create" | "schedule";
 
 export default function ProviderDashboard() {
   const router = useRouter();
@@ -80,6 +83,7 @@ export default function ProviderDashboard() {
     { id: "bookings", label: "Semua Booking" },
     { id: "fields", label: "Lapangan" },
     { id: "create", label: "+ Tambah Lapangan" },
+    { id: "schedule", label: "+ Jadwal" },
   ];
 
   async function handleConfirmBooking(booking: Booking) {
@@ -99,7 +103,7 @@ export default function ProviderDashboard() {
   async function handleCancelBooking(booking: Booking) {
     if (!confirm("Yakin ingin membatalkan booking ini?")) return;
     try {
-      await updateBookingStatus(booking.id, "cancelled");
+      await cancelBooking(booking.id);
       setBookings((prev) =>
         prev.map((b) =>
           b.id === booking.id ? { ...b, status: "cancelled" } : b
@@ -346,6 +350,14 @@ export default function ProviderDashboard() {
             {/* Create Field Tab */}
             {activeTab === "create" && (
               <CreateFieldForm onSuccess={handleFieldCreated} />
+            )}
+
+            {/* Create Schedule Tab */}
+            {activeTab === "schedule" && (
+              <CreateScheduleForm
+                fields={fields}
+                onSuccess={() => fetchData()}
+              />
             )}
           </>
         )}
@@ -652,6 +664,228 @@ function FieldCard({ field }: { field: Field }) {
           </span>
         </div>
       </div>
+    </div>
+  );
+}
+
+// Create Schedule Form Component
+function CreateScheduleForm({
+  fields,
+  onSuccess,
+}: {
+  fields: Field[];
+  onSuccess: () => void;
+}) {
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  const [selectedFieldId, setSelectedFieldId] = useState<number | null>(null);
+  const [dayOfWeek, setDayOfWeek] = useState<number>(1); // Default Monday
+  const [startTime, setStartTime] = useState("08:00");
+  const [endTime, setEndTime] = useState("22:00");
+  const [isAvailable, setIsAvailable] = useState(true);
+
+  const days = [
+    { value: 0, label: "Minggu" },
+    { value: 1, label: "Senin" },
+    { value: 2, label: "Selasa" },
+    { value: 3, label: "Rabu" },
+    { value: 4, label: "Kamis" },
+    { value: 5, label: "Jumat" },
+    { value: 6, label: "Sabtu" },
+  ];
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selectedFieldId) {
+      setError("Pilih lapangan terlebih dahulu");
+      return;
+    }
+
+    setSubmitting(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      // Format time as full datetime (backend expects "YYYY-MM-DD HH:mm:ss")
+      const baseDate = "2025-01-01";
+      const formattedStartTime = `${baseDate} ${startTime}:00`;
+      const formattedEndTime = `${baseDate} ${endTime}:00`;
+
+      await createSchedule({
+        field_id: selectedFieldId,
+        day_of_week: dayOfWeek,
+        start_time: formattedStartTime,
+        end_time: formattedEndTime,
+        is_available: isAvailable,
+      });
+
+      setSuccess(
+        `Jadwal untuk hari ${
+          days.find((d) => d.value === dayOfWeek)?.label
+        } berhasil ditambahkan`
+      );
+      onSuccess();
+
+      // Reset form
+      setDayOfWeek(1);
+    } catch (err: any) {
+      if (err.message && err.message.includes("Schedule already exists")) {
+        setError(
+          `Jadwal untuk hari ${
+            days.find((d) => d.value === dayOfWeek)?.label
+          } sudah ada. Harap hapus atau edit jadwal yang ada.`
+        );
+      } else {
+        setError(err.message || "Gagal membuat jadwal");
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  const selectedField = fields.find((f) => f.id === selectedFieldId);
+
+  return (
+    <div className="max-w-2xl">
+      <h2 className="text-xl font-semibold text-gray-900 mb-2">
+        Tambah Jadwal Lapangan
+      </h2>
+      <p className="text-sm text-gray-500 mb-6">
+        Tentukan hari dan jam operasional untuk setiap lapangan
+      </p>
+
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-5">
+          {/* Field Selection */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Pilih Lapangan <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={selectedFieldId || ""}
+              onChange={(e) =>
+                setSelectedFieldId(parseInt(e.target.value) || null)
+              }
+              required
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none bg-white"
+            >
+              <option value="">Pilih lapangan</option>
+              {fields.map((field) => (
+                <option key={field.id} value={field.id}>
+                  {field.name} - {field.field_type}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Current Schedules */}
+          {selectedField &&
+            selectedField.schedules &&
+            selectedField.schedules.length > 0 && (
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <div className="text-sm font-medium text-gray-700 mb-2">
+                  Jadwal yang sudah ada:
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {selectedField.schedules.map((schedule) => (
+                    <span
+                      key={schedule.id}
+                      className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded"
+                    >
+                      {
+                        days.find((d) => d.value === schedule.day_of_week)
+                          ?.label
+                      }
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+          {/* Day Selection */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Hari <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={dayOfWeek}
+              onChange={(e) => setDayOfWeek(parseInt(e.target.value))}
+              required
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none bg-white"
+            >
+              {days.map((day) => (
+                <option key={day.value} value={day.value}>
+                  {day.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Time Range */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Jam Buka <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="time"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+                required
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Jam Tutup <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="time"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+                required
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none"
+              />
+            </div>
+          </div>
+
+          {/* Availability Toggle */}
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              id="isAvailable"
+              checked={isAvailable}
+              onChange={(e) => setIsAvailable(e.target.checked)}
+              className="w-4 h-4 rounded border-gray-300"
+            />
+            <label htmlFor="isAvailable" className="text-sm text-gray-700">
+              Tersedia untuk booking
+            </label>
+          </div>
+        </div>
+
+        {error && (
+          <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            {error}
+          </div>
+        )}
+
+        {success && (
+          <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
+            {success}
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={submitting || !selectedFieldId}
+          className="w-full px-6 py-3 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50"
+        >
+          {submitting ? "Menyimpan..." : "Simpan Jadwal"}
+        </button>
+      </form>
     </div>
   );
 }

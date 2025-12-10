@@ -45,6 +45,7 @@ export default function SignInPage() {
         }
       }, 340);
     } catch (err: any) {
+      console.error("Login page error:", err);
       setError(err.message || "Gagal masuk");
       setSubmitting(false);
     }

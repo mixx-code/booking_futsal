@@ -5,12 +5,15 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "../../context/AuthContext";
 import {
-  getMyBookings,
-  updateBookingStatus,
+  getBookingById,
+  cancelBooking,
+  updateBooking,
+  getAvailableSlots,
   formatDate,
   formatPrice,
   formatTime,
   Booking,
+  AvailableSlot,
 } from "../../lib/api";
 
 export default function BookingDetailPage() {
@@ -25,6 +28,13 @@ export default function BookingDetailPage() {
   const [showCancel, setShowCancel] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  // Reschedule State
+  const [showReschedule, setShowReschedule] = useState(false);
+  const [rescheduleDate, setRescheduleDate] = useState("");
+  const [rescheduleTime, setRescheduleTime] = useState("");
+  const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([]);
+  const [checkingSlots, setCheckingSlots] = useState(false);
+
   useEffect(() => {
     if (!authLoading && !isLoggedIn) {
       router.push("/login/signin");
@@ -36,22 +46,48 @@ export default function BookingDetailPage() {
       if (!isLoggedIn) return;
       try {
         setLoading(true);
-        // Fetch all user bookings and find the one with matching ID
-        const bookings = await getMyBookings();
-        const found = bookings.find((b) => b.id === bookingId);
-        if (found) {
-          setBooking(found);
-        } else {
-          setError("Booking tidak ditemukan");
-        }
+        const bookingData = await getBookingById(bookingId);
+        setBooking(bookingData);
+        // Set initial reschedule date to current booking date
+        setRescheduleDate(bookingData.booking_date.split("T")[0]);
       } catch (err: any) {
-        setError(err.message);
+        setError(err.message || "Booking tidak ditemukan");
       } finally {
         setLoading(false);
       }
     }
     fetchBooking();
   }, [isLoggedIn, bookingId]);
+
+  useEffect(() => {
+    async function checkSlots() {
+      if (!booking || !rescheduleDate || !showReschedule) return;
+
+      setCheckingSlots(true);
+      try {
+        // Need to parse the date to ensure we're checking validity
+        const selectedDate = new Date(rescheduleDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (selectedDate < today) {
+          setAvailableSlots([]);
+          return;
+        }
+
+        const slots = await getAvailableSlots(booking.field_id, rescheduleDate);
+        setAvailableSlots(slots);
+      } catch (err) {
+        console.error("Error fetching slots:", err);
+      } finally {
+        setCheckingSlots(false);
+      }
+    }
+
+    // Debounce slot checking
+    const timeout = setTimeout(checkSlots, 500);
+    return () => clearTimeout(timeout);
+  }, [rescheduleDate, booking, showReschedule]);
 
   const statusConfig: Record<string, { label: string; className: string }> = {
     pending: { label: "Menunggu", className: "bg-yellow-100 text-yellow-800" },
@@ -67,12 +103,41 @@ export default function BookingDetailPage() {
     if (!booking) return;
     setSubmitting(true);
     try {
-      await updateBookingStatus(booking.id, "cancelled");
+      await cancelBooking(booking.id);
       setBooking({ ...booking, status: "cancelled" });
       setShowCancel(false);
       alert("Booking berhasil dibatalkan");
     } catch (err: any) {
       alert(err.message || "Gagal membatalkan booking");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleReschedule() {
+    if (!booking || !rescheduleDate || !rescheduleTime) return;
+
+    setSubmitting(true);
+    try {
+      const startTime = `${rescheduleDate} ${rescheduleTime}:00`;
+      // Calculate end time based on original duration
+      const startHour = parseInt(rescheduleTime.split(":")[0]);
+      const endHour = startHour + booking.duration;
+      const endTime = `${rescheduleDate} ${endHour
+        .toString()
+        .padStart(2, "0")}:00:00`;
+
+      const updatedBooking = await updateBooking(booking.id, {
+        booking_date: rescheduleDate,
+        start_time: startTime,
+        end_time: endTime,
+      });
+
+      setBooking(updatedBooking);
+      setShowReschedule(false);
+      alert("Jadwal booking berhasil diubah");
+    } catch (err: any) {
+      alert(err.message || "Gagal mengubah jadwal booking");
     } finally {
       setSubmitting(false);
     }
@@ -235,13 +300,19 @@ export default function BookingDetailPage() {
         </div>
 
         {/* Actions */}
-        {canCancel && !showCancel && (
+        {canCancel && !showCancel && !showReschedule && (
           <div className="flex gap-3">
             <button
               onClick={() => setShowCancel(true)}
               className="flex-1 px-4 py-3 bg-red-50 text-red-600 font-medium rounded-lg hover:bg-red-100 transition-colors"
             >
               Batalkan Booking
+            </button>
+            <button
+              onClick={() => setShowReschedule(true)}
+              className="flex-1 px-4 py-3 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
+            >
+              Reschedule
             </button>
           </div>
         )}
@@ -269,6 +340,102 @@ export default function BookingDetailPage() {
               >
                 {submitting ? "Memproses..." : "Ya, Batalkan"}
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* Reschedule Modal */}
+        {showReschedule && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+            <div className="bg-white rounded-xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-bold text-gray-900">
+                  Reschedule Booking
+                </h3>
+                <button
+                  onClick={() => setShowReschedule(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M18 6L6 18M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Pilih Tanggal Baru
+                  </label>
+                  <input
+                    type="date"
+                    value={rescheduleDate}
+                    onChange={(e) => setRescheduleDate(e.target.value)}
+                    min={new Date().toISOString().split("T")[0]}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-900 outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Pilih Jam Mulai (Durasi: {booking.duration} jam)
+                  </label>
+
+                  {checkingSlots ? (
+                    <div className="text-center py-4 text-gray-500 text-sm">
+                      Cek ketersediaan...
+                    </div>
+                  ) : availableSlots.length === 0 ? (
+                    <div className="text-center py-4 bg-gray-50 rounded-lg text-gray-500 text-sm">
+                      Tidak ada slot tersedia untuk tanggal ini
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-4 gap-2">
+                      {availableSlots.map((slot, idx) => {
+                        const timeString = slot.start_time.substring(11, 16);
+                        return (
+                          <button
+                            key={idx}
+                            data-testid={`time-slot-${timeString}`}
+                            onClick={() => setRescheduleTime(timeString)}
+                            className={`px-2 py-2 text-sm rounded-lg border transition-colors ${
+                              rescheduleTime === timeString
+                                ? "bg-gray-900 text-white border-gray-900"
+                                : "bg-white text-gray-700 border-gray-200 hover:border-gray-900"
+                            }`}
+                          >
+                            {timeString}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                <div className="pt-4 flex gap-3">
+                  <button
+                    onClick={() => setShowReschedule(false)}
+                    className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    data-testid="save-reschedule"
+                    onClick={handleReschedule}
+                    disabled={submitting || !rescheduleTime}
+                    className="flex-1 px-4 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {submitting ? "Menyimpan..." : "Simpan Perubahan"}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}

@@ -49,14 +49,33 @@ export interface Booking {
   status: string;
   created_at: string;
   field?: {
+    id?: number;
     name: string;
     field_type: string;
     price_per_hour: number | string;
+    is_active?: boolean;
+    description?: string;
+    images?: any[];
   };
   customer?: {
+    id?: number;
     full_name: string;
     email: string;
     phone: string;
+  };
+}
+
+export interface BookingsResponse {
+  bookings: Booking[];
+  pagination: {
+    current_page: number;
+    total_pages: number;
+    total_items: number;
+    items_per_page: number;
+    has_next_page: boolean;
+    has_prev_page: boolean;
+    next_page: number | null;
+    prev_page: number | null;
   };
 }
 
@@ -191,6 +210,37 @@ export async function getFields(): Promise<Field[]> {
   return data.data || [];
 }
 
+export async function createSchedule(params: {
+  field_id: number;
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+  is_available?: boolean;
+}): Promise<Schedule> {
+  const token = getToken();
+
+  if (!token) {
+    throw new Error("Not authenticated");
+  }
+
+  const res = await fetch(`${API_BASE}/schedules`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(params),
+  });
+
+  const data: ApiResponse<Schedule> = await res.json();
+
+  if (!data.success || !data.data) {
+    throw new Error(data.message || "Failed to create schedule");
+  }
+
+  return data.data;
+}
+
 export async function getFieldById(id: number): Promise<Field> {
   const res = await fetch(`${API_BASE}/get-fields/${id}`);
   const data: ApiResponse<Field> = await res.json();
@@ -249,53 +299,110 @@ export async function createBooking(params: {
   return data.data;
 }
 
-export async function getMyBookings(): Promise<Booking[]> {
+// NEW: Unified bookings endpoint - returns user's own bookings or all bookings for admin
+export async function getBookings(params?: {
+  page?: number;
+  limit?: number;
+  status?: string;
+  field_id?: number;
+  start_date?: string;
+  end_date?: string;
+  sort_by?: string;
+  sort_order?: string;
+}): Promise<BookingsResponse> {
   const token = getToken();
 
   if (!token) {
     throw new Error("Not authenticated");
   }
 
-  const res = await fetch(`${API_BASE}/my-bookings`, {
+  const queryParams = new URLSearchParams();
+  if (params?.page) queryParams.append("page", params.page.toString());
+  if (params?.limit) queryParams.append("limit", params.limit.toString());
+  if (params?.status) queryParams.append("status", params.status);
+  if (params?.field_id)
+    queryParams.append("field_id", params.field_id.toString());
+  if (params?.start_date) queryParams.append("start_date", params.start_date);
+  if (params?.end_date) queryParams.append("end_date", params.end_date);
+  if (params?.sort_by) queryParams.append("sort_by", params.sort_by);
+  if (params?.sort_order) queryParams.append("sort_order", params.sort_order);
+
+  const url = queryParams.toString()
+    ? `${API_BASE}/bookings?${queryParams.toString()}`
+    : `${API_BASE}/bookings`;
+
+  const res = await fetch(url, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
   });
 
-  const data: ApiResponse<Booking[]> = await res.json();
+  const data: ApiResponse<BookingsResponse> = await res.json();
 
-  if (!data.success) {
+  if (!data.success || !data.data) {
     throw new Error(data.message || "Failed to fetch bookings");
   }
 
-  return data.data || [];
+  return data.data;
 }
 
-export async function getAllBookings(): Promise<Booking[]> {
+// NEW: Get single booking by ID
+export async function getBookingById(id: number): Promise<Booking> {
   const token = getToken();
 
   if (!token) {
     throw new Error("Not authenticated");
   }
 
-  const res = await fetch(`${API_BASE}/all-bookings`, {
+  const res = await fetch(`${API_BASE}/bookings/${id}`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
   });
 
-  const data: ApiResponse<Booking[]> = await res.json();
+  const data: ApiResponse<Booking> = await res.json();
 
-  if (!data.success) {
-    throw new Error(data.message || "Failed to fetch bookings");
+  if (!data.success || !data.data) {
+    throw new Error(data.message || "Failed to fetch booking");
   }
 
-  return data.data || [];
+  return data.data;
 }
 
-export async function updateBookingStatus(
+// NEW: Cancel booking
+export async function cancelBooking(bookingId: number): Promise<Booking> {
+  const token = getToken();
+
+  if (!token) {
+    throw new Error("Not authenticated");
+  }
+
+  const res = await fetch(`${API_BASE}/bookings/${bookingId}/cancel`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data: ApiResponse<Booking> = await res.json();
+
+  if (!data.success || !data.data) {
+    throw new Error(data.message || "Failed to cancel booking");
+  }
+
+  return data.data;
+}
+
+// NEW: Update/edit booking (reschedule)
+export async function updateBooking(
   bookingId: number,
-  status: string
+  params: {
+    field_id?: number;
+    booking_date?: string;
+    start_time?: string;
+    end_time?: string;
+    duration?: number;
+  }
 ): Promise<Booking> {
   const token = getToken();
 
@@ -303,13 +410,13 @@ export async function updateBookingStatus(
     throw new Error("Not authenticated");
   }
 
-  const res = await fetch(`${API_BASE}/booking/${bookingId}/status`, {
-    method: "PATCH",
+  const res = await fetch(`${API_BASE}/bookings/${bookingId}`, {
+    method: "PUT",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ status }),
+    body: JSON.stringify(params),
   });
 
   const data: ApiResponse<Booking> = await res.json();
@@ -319,6 +426,28 @@ export async function updateBookingStatus(
   }
 
   return data.data;
+}
+
+// DEPRECATED: Keep for backward compatibility during migration
+export async function getMyBookings(): Promise<Booking[]> {
+  const response = await getBookings({ limit: 100 });
+  return response.bookings;
+}
+
+export async function getAllBookings(): Promise<Booking[]> {
+  const response = await getBookings({ limit: 100 });
+  return response.bookings;
+}
+
+export async function updateBookingStatus(
+  bookingId: number,
+  status: string
+): Promise<Booking> {
+  // Only cancel is supported now
+  if (status === "cancelled") {
+    return cancelBooking(bookingId);
+  }
+  throw new Error("Only cancellation is supported for users");
 }
 
 // Helper to format price from backend (Decimal)

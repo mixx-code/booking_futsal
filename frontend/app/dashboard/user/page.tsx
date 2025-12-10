@@ -7,7 +7,7 @@ import { useAuth } from "../../context/AuthContext";
 import {
   getMyBookings,
   getFields,
-  updateBookingStatus,
+  cancelBooking,
   formatPrice,
   formatDate,
   formatTime,
@@ -71,10 +71,15 @@ export default function UserDashboard() {
     { id: "browse", label: "Cari Lapangan" },
   ];
 
+  const [cancellingId, setCancellingId] = useState<number | null>(null);
+
   async function handleCancelBooking(booking: Booking) {
     if (!confirm("Yakin ingin membatalkan booking ini?")) return;
+    setCancellingId(booking.id);
     try {
-      await updateBookingStatus(booking.id, "cancelled");
+      console.log("Attempting to cancel booking:", booking.id);
+      await cancelBooking(booking.id);
+      console.log("Booking cancelled successfully");
       setBookings((prev) =>
         prev.map((b) =>
           b.id === booking.id ? { ...b, status: "cancelled" } : b
@@ -82,7 +87,14 @@ export default function UserDashboard() {
       );
       alert("Booking berhasil dibatalkan");
     } catch (err: any) {
-      alert(err.message || "Gagal membatalkan booking");
+      console.error("Failed to cancel booking:", err);
+      // Show error in a more visible way if needed, or stick to alert but ensure message is clear
+      alert(
+        err.message ||
+          "Gagal membatalkan booking. Pastikan jadwal belum lewat atau kurang dari 1 jam."
+      );
+    } finally {
+      setCancellingId(null);
     }
   }
 
@@ -226,6 +238,7 @@ export default function UserDashboard() {
                         <BookingCard
                           key={booking.id}
                           booking={booking}
+                          isCancelling={cancellingId === booking.id}
                           onCancel={() => handleCancelBooking(booking)}
                         />
                       ))}
@@ -272,6 +285,7 @@ export default function UserDashboard() {
                         <BookingCard
                           key={booking.id}
                           booking={booking}
+                          isCancelling={cancellingId === booking.id}
                           onCancel={() => handleCancelBooking(booking)}
                         />
                       ))}
@@ -328,10 +342,12 @@ export default function UserDashboard() {
 function BookingCard({
   booking,
   showActions = true,
+  isCancelling = false,
   onCancel,
 }: {
   booking: Booking;
   showActions?: boolean;
+  isCancelling?: boolean;
   onCancel?: () => void;
 }) {
   const statusConfig: Record<string, { label: string; className: string }> = {
@@ -434,13 +450,34 @@ function BookingCard({
       </div>
 
       {showActions && canCancel && (
-        <div className="mt-4">
+        <div className="mt-4 flex gap-3">
+          <Link
+            href={`/bookings/${booking.id}`}
+            className="flex-1 px-4 py-2 text-center text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+          >
+            Reschedule / Detail
+          </Link>
           <button
             onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+            disabled={isCancelling}
+            className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+              isCancelling
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : "text-red-600 bg-red-50 hover:bg-red-100"
+            }`}
           >
-            Batalkan Booking
+            {isCancelling ? "Memproses..." : "Batalkan"}
           </button>
+        </div>
+      )}
+      {showActions && !canCancel && (
+        <div className="mt-4">
+          <Link
+            href={`/bookings/${booking.id}`}
+            className="block w-full px-4 py-2 text-center text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+          >
+            Lihat Detail
+          </Link>
         </div>
       )}
     </div>

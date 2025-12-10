@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { register } from "../../lib/api";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -24,31 +25,19 @@ export default function SignUpPage() {
 
     const form = e.currentTarget as HTMLFormElement;
     const data = new FormData(form);
-    const body = {
-      name: String(data.get("name") || "").trim(),
-      email: String(data.get("email") || "").trim(),
-      password: String(data.get("password") || ""),
-    };
+
+    const name = String(data.get("name") || "").trim();
+    const email = String(data.get("email") || "").trim();
+    const password = String(data.get("password") || "");
+    const phone = String(data.get("phone") || "").trim();
 
     try {
-      const res = await fetch("/api/v1/register", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(body),
-      });
-
-      const json = await res.json();
-      if (!res.ok) {
-        setError(json?.message || "Pendaftaran gagal");
-        setSubmitting(false);
-        return;
-      }
-
+      await register(name, email, password, phone);
       // success -> animate out then redirect
       setClosing(true);
-      setTimeout(() => router.push("/"), 340);
-    } catch (err) {
-      setError("Kesalahan jaringan");
+      setTimeout(() => router.push("/login/signin"), 340);
+    } catch (err: any) {
+      setError(err.message || "Pendaftaran gagal");
       setSubmitting(false);
     }
   }
@@ -130,6 +119,18 @@ export default function SignUpPage() {
                 <input
                   name="email"
                   type="email"
+                  required
+                  className="mt-1 block w-full border rounded-md px-3 py-2"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Nomor Telepon
+                </label>
+                <input
+                  name="phone"
+                  type="tel"
                   required
                   className="mt-1 block w-full border rounded-md px-3 py-2"
                 />

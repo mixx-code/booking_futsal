@@ -267,13 +267,31 @@ function BookingCard({
         <span className="font-bold text-gray-900">
           {formatPrice(booking.total_price)}
         </span>
-        {showActions && canCancel && (
-          <button
-            onClick={onCancel}
-            className="px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100"
+      </div>
+
+      <div className="mt-4 flex gap-3">
+        {showActions && canCancel ? (
+          <>
+            <Link
+              href={`/bookings/${booking.id}`}
+              className="flex-1 px-4 py-2 text-center text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              Reschedule / Detail
+            </Link>
+            <button
+              onClick={onCancel}
+              className="flex-1 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+            >
+              Batalkan
+            </button>
+          </>
+        ) : (
+          <Link
+            href={`/bookings/${booking.id}`}
+            className="w-full px-4 py-2 text-center text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
           >
-            Batalkan
-          </button>
+            Lihat Detail
+          </Link>
         )}
       </div>
     </div>
