@@ -190,7 +190,11 @@ export default function ServiceDetailPage() {
               <div className="relative h-48 md:h-64 bg-gray-100">
                 {field.images && field.images.length > 0 ? (
                   <Image
-                    src={field.images[0].url}
+                    src={
+                      typeof field.images[0] === "string"
+                        ? field.images[0]
+                        : field.images[0].url
+                    }
                     alt={field.name}
                     fill
                     style={{ objectFit: "cover" }}

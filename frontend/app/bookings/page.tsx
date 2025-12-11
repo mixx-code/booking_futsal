@@ -70,33 +70,42 @@ export default function BookingsPage() {
   }
 
   const statusConfig: Record<string, { label: string; className: string }> = {
-    pending: { label: "Menunggu", className: "bg-yellow-100 text-yellow-800" },
+    pending: {
+      label: "Menunggu",
+      className: "bg-amber-100 text-amber-700 ring-1 ring-amber-200",
+    },
     confirmed: {
       label: "Dikonfirmasi",
-      className: "bg-green-100 text-green-800",
+      className: "bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200",
     },
-    cancelled: { label: "Dibatalkan", className: "bg-red-100 text-red-800" },
-    completed: { label: "Selesai", className: "bg-gray-100 text-gray-800" },
+    cancelled: {
+      label: "Dibatalkan",
+      className: "bg-red-100 text-red-700 ring-1 ring-red-200",
+    },
+    completed: {
+      label: "Selesai",
+      className: "bg-slate-100 text-slate-700 ring-1 ring-slate-200",
+    },
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50">
       {/* Header */}
-      <header className="bg-white border-b">
+      <header className="bg-white border-b border-slate-100 sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 sm:gap-4">
               <Link
                 href="/dashboard/user"
-                className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+                className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 transition-colors"
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                   <path
@@ -108,11 +117,13 @@ export default function BookingsPage() {
                   />
                 </svg>
               </Link>
-              <h1 className="text-xl font-bold text-gray-900">Booking Saya</h1>
+              <h1 className="text-lg sm:text-xl font-bold text-slate-900">
+                Booking Saya
+              </h1>
             </div>
             <Link
               href="/services"
-              className="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors"
+              className="px-4 py-2.5 bg-slate-900 text-white text-sm font-semibold rounded-xl hover:bg-slate-800 transition-colors shadow-sm"
             >
               + Booking Baru
             </Link>
@@ -124,8 +135,8 @@ export default function BookingsPage() {
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-8">
         {loading ? (
           <div className="text-center py-16">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-            <p className="mt-4 text-gray-600">Memuat data...</p>
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900"></div>
+            <p className="mt-4 text-slate-600">Memuat data...</p>
           </div>
         ) : error ? (
           <div className="text-center py-16 text-red-600">{error}</div>
@@ -133,17 +144,17 @@ export default function BookingsPage() {
           <>
             {/* Upcoming */}
             <section>
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              <h2 className="text-lg font-semibold text-slate-900 mb-4">
                 Akan Datang ({upcomingBookings.length})
               </h2>
               {upcomingBookings.length === 0 ? (
-                <div className="bg-white rounded-xl border border-gray-100 p-8 text-center">
-                  <p className="text-gray-500 mb-4">
+                <div className="bg-white rounded-2xl border border-slate-100 p-8 text-center shadow-sm">
+                  <p className="text-slate-500 mb-4">
                     Tidak ada booking mendatang
                   </p>
                   <Link
                     href="/services"
-                    className="inline-block px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg"
+                    className="inline-block px-5 py-2.5 bg-slate-900 text-white text-sm font-semibold rounded-xl"
                   >
                     Cari Lapangan
                   </Link>
@@ -164,11 +175,11 @@ export default function BookingsPage() {
 
             {/* Past */}
             <section>
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              <h2 className="text-lg font-semibold text-slate-900 mb-4">
                 Riwayat ({pastBookings.length})
               </h2>
               {pastBookings.length === 0 ? (
-                <div className="bg-white rounded-xl border border-gray-100 p-6 text-center text-gray-500">
+                <div className="bg-white rounded-2xl border border-slate-100 p-6 text-center text-slate-500 shadow-sm">
                   Belum ada riwayat booking
                 </div>
               ) : (
@@ -208,26 +219,32 @@ function BookingCard({
     booking.status === "pending" || booking.status === "confirmed";
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-5">
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 sm:p-5 hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-gray-900 text-lg truncate">
+          <h3 className="font-semibold text-slate-900 text-base sm:text-lg truncate">
             {booking.field?.name || `Lapangan #${booking.field_id}`}
           </h3>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <p className="text-sm text-slate-500 mt-0.5">
             {booking.field?.field_type}
           </p>
         </div>
         <span
-          className={`px-3 py-1 text-sm font-medium rounded-full ${config.className}`}
+          className={`px-3 py-1 text-xs sm:text-sm font-medium rounded-full shrink-0 ${config.className}`}
         >
           {config.label}
         </span>
       </div>
 
-      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 text-sm text-slate-600">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            className="shrink-0"
+          >
             <rect
               x="3"
               y="4"
@@ -241,8 +258,14 @@ function BookingCard({
           </svg>
           <span>{formatDate(booking.booking_date)}</span>
         </div>
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+        <div className="flex items-center gap-2 text-sm text-slate-600">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            className="shrink-0"
+          >
             <circle
               cx="12"
               cy="12"
@@ -263,24 +286,24 @@ function BookingCard({
         </div>
       </div>
 
-      <div className="mt-4 flex items-center justify-between pt-3 border-t border-gray-100">
-        <span className="font-bold text-gray-900">
+      <div className="mt-4 flex items-center justify-between pt-3 border-t border-slate-100">
+        <span className="font-bold text-slate-900 text-lg">
           {formatPrice(booking.total_price)}
         </span>
       </div>
 
-      <div className="mt-4 flex gap-3">
+      <div className="mt-4 flex flex-col sm:flex-row gap-2 sm:gap-3">
         {showActions && canCancel ? (
           <>
             <Link
               href={`/bookings/${booking.id}`}
-              className="flex-1 px-4 py-2 text-center text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              className="flex-1 px-4 py-2.5 text-center text-sm font-medium text-slate-700 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors"
             >
               Reschedule / Detail
             </Link>
             <button
               onClick={onCancel}
-              className="flex-1 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+              className="flex-1 px-4 py-2.5 text-sm font-medium text-red-600 bg-red-50 rounded-xl hover:bg-red-100 transition-colors"
             >
               Batalkan
             </button>
@@ -288,7 +311,7 @@ function BookingCard({
         ) : (
           <Link
             href={`/bookings/${booking.id}`}
-            className="w-full px-4 py-2 text-center text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+            className="w-full px-4 py-2.5 text-center text-sm font-medium text-slate-700 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors"
           >
             Lihat Detail
           </Link>

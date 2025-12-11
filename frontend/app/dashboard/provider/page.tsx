@@ -11,6 +11,7 @@ import {
   createSchedule,
   cancelBooking,
   updateBookingStatus,
+  deleteField,
   formatPrice,
   formatDate,
   formatTime,
@@ -122,29 +123,33 @@ export default function ProviderDashboard() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b">
+    <div className="min-h-screen bg-slate-50">
+      <header className="bg-white border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <Link href="/" className="text-2xl font-extrabold text-gray-900">
+              <Link
+                href="/"
+                className="text-xl sm:text-2xl font-extrabold text-slate-900 hover:text-slate-700 transition-colors"
+              >
                 BookingFutsal
               </Link>
-              <p className="text-sm text-gray-500 mt-0.5">Dashboard Admin</p>
+              <p className="text-sm text-slate-500 mt-0.5">Dashboard Admin</p>
             </div>
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-600">{user?.full_name}</span>
+            <div className="flex items-center gap-2 sm:gap-3">
+              <span className="text-sm text-slate-600 hidden sm:block">
+                {user?.full_name}
+              </span>
               <button
                 onClick={logout}
-                className="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200"
+                className="px-3 sm:px-4 py-2 bg-slate-100 text-slate-700 text-sm font-medium rounded-xl hover:bg-slate-200 transition-colors"
               >
                 Keluar
               </button>
@@ -154,22 +159,22 @@ export default function ProviderDashboard() {
       </header>
 
       {/* Tabs */}
-      <div className="bg-white border-b sticky top-0 z-10">
+      <div className="bg-white border-b border-slate-100 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <nav className="flex gap-1 overflow-x-auto">
+          <nav className="flex gap-1 overflow-x-auto no-scrollbar">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
                   activeTab === tab.id
-                    ? "text-gray-900 border-gray-900"
-                    : "text-gray-500 border-transparent hover:text-gray-700"
+                    ? "text-slate-900 border-slate-900"
+                    : "text-slate-500 border-transparent hover:text-slate-700 hover:border-slate-300"
                 }`}
               >
                 {tab.label}
               </button>
-            ))}
+            ))}{" "}
           </nav>
         </div>
       </div>
@@ -340,7 +345,13 @@ export default function ProviderDashboard() {
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {fields.map((field) => (
-                      <FieldCard key={field.id} field={field} />
+                      <FieldCard
+                        key={field.id}
+                        field={field}
+                        onDelete={(id) =>
+                          setFields((prev) => prev.filter((f) => f.id !== id))
+                        }
+                      />
                     ))}
                   </div>
                 )}
@@ -393,7 +404,7 @@ function CreateFieldForm({ onSuccess }: { onSuccess: () => void }) {
 
   return (
     <div className="max-w-2xl">
-      <h2 className="text-xl font-semibold text-gray-900 mb-6">
+      <h2 className="text-lg sm:text-xl font-semibold text-slate-900 mb-4 sm:mb-6">
         Tambah Lapangan Baru
       </h2>
 
@@ -424,12 +435,8 @@ function CreateFieldForm({ onSuccess }: { onSuccess: () => void }) {
               className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none bg-white"
             >
               <option value="">Pilih jenis lapangan</option>
-              <option value="Futsal">Futsal</option>
-              <option value="Mini Soccer">Mini Soccer</option>
-              <option value="Badminton">Badminton</option>
-              <option value="Basket">Basket</option>
-              <option value="Tenis">Tenis</option>
-              <option value="Voli">Voli</option>
+              <option value="Indoor">Indoor</option>
+              <option value="Outdoor">Outdoor</option>
             </select>
           </div>
 
@@ -610,10 +617,32 @@ function AdminBookingCard({
 }
 
 // Field Card Component
-function FieldCard({ field }: { field: Field }) {
+function FieldCard({
+  field,
+  onDelete,
+}: {
+  field: Field;
+  onDelete: (id: number) => void;
+}) {
+  const [deleting, setDeleting] = useState(false);
+
+  async function handleDelete() {
+    if (!confirm(`Yakin ingin menghapus lapangan "${field.name}"?`)) return;
+
+    setDeleting(true);
+    try {
+      await deleteField(field.id);
+      onDelete(field.id);
+    } catch (err: any) {
+      alert(err.message || "Gagal menghapus lapangan");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      <div className="relative h-32 bg-gray-100">
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition-shadow">
+      <div className="relative h-32 bg-slate-100">
         {field.images && field.images.length > 0 ? (
           <img
             src={
@@ -625,7 +654,7 @@ function FieldCard({ field }: { field: Field }) {
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-400">
+          <div className="w-full h-full flex items-center justify-center text-slate-400">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
               <rect
                 x="3"
@@ -640,29 +669,36 @@ function FieldCard({ field }: { field: Field }) {
           </div>
         )}
         <div className="absolute top-2 left-2">
-          <span className="px-2 py-1 bg-gray-900 text-white text-xs font-medium rounded-full">
+          <span className="px-2.5 py-1 bg-slate-900/90 backdrop-blur-sm text-white text-xs font-medium rounded-full">
             {field.field_type}
           </span>
         </div>
         {field.is_active && (
           <div className="absolute top-2 right-2">
-            <span className="px-2 py-1 bg-green-500 text-white text-xs font-medium rounded-full">
+            <span className="px-2 py-1 bg-emerald-500 text-white text-xs font-medium rounded-full">
               Aktif
             </span>
           </div>
         )}
       </div>
       <div className="p-4">
-        <h3 className="font-semibold text-gray-900">{field.name}</h3>
-        <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+        <h3 className="font-semibold text-slate-900">{field.name}</h3>
+        <p className="text-sm text-slate-500 mt-1 line-clamp-2">
           {field.description}
         </p>
         <div className="mt-3 flex items-center justify-between">
-          <span className="text-sm text-gray-500">Per jam</span>
-          <span className="font-bold text-gray-900">
+          <span className="text-sm text-slate-500">Per jam</span>
+          <span className="font-bold text-slate-900">
             {formatPrice(field.price_per_hour)}
           </span>
         </div>
+        <button
+          onClick={handleDelete}
+          disabled={deleting}
+          className="mt-3 w-full px-3 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-xl hover:bg-red-100 transition-colors disabled:opacity-50"
+        >
+          {deleting ? "Menghapus..." : "Hapus Lapangan"}
+        </button>
       </div>
     </div>
   );
@@ -749,18 +785,18 @@ function CreateScheduleForm({
 
   return (
     <div className="max-w-2xl">
-      <h2 className="text-xl font-semibold text-gray-900 mb-2">
+      <h2 className="text-lg sm:text-xl font-semibold text-slate-900 mb-2">
         Tambah Jadwal Lapangan
       </h2>
-      <p className="text-sm text-gray-500 mb-6">
+      <p className="text-sm text-slate-500 mb-4 sm:mb-6">
         Tentukan hari dan jam operasional untuk setiap lapangan
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-5">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 sm:p-6 space-y-5">
           {/* Field Selection */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               Pilih Lapangan <span className="text-red-500">*</span>
             </label>
             <select
