@@ -15,7 +15,7 @@ export default function Navbar() {
         <nav className="hidden lg:flex items-center gap-6 text-sm">
           <Link
             href="/services"
-            className="text-gray-700 hover:text-gray-900 cursor-pointer"
+            className="text-slate-600 hover:text-slate-900 font-medium transition-colors py-2"
           >
             Lapangan
           </Link>
@@ -28,27 +28,37 @@ export default function Navbar() {
                     ? "/dashboard/provider"
                     : "/dashboard/user"
                 }
-                className="text-gray-700 hover:text-gray-900"
+                className="text-slate-600 hover:text-slate-900 font-medium transition-colors py-2"
               >
                 Dashboard
               </Link>
               <div className="flex items-center gap-3">
-                <span className="text-gray-600">{user?.full_name}</span>
+                <span className="text-slate-500 text-sm">
+                  {user?.full_name}
+                </span>
                 <button
                   onClick={logout}
-                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                  className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 font-medium transition-colors"
                 >
                   Keluar
                 </button>
               </div>
             </>
           ) : (
-            <Link href="/login/signin" className="flex items-center gap-4">
-              <span className="text-gray-700">Masuk</span>
-              <button className="px-4 py-2 bg-gray-900 text-white rounded cursor-pointer">
+            <div className="flex items-center gap-3">
+              <Link
+                href="/login/signin"
+                className="text-slate-600 hover:text-slate-900 font-medium transition-colors py-2"
+              >
+                Masuk
+              </Link>
+              <Link
+                href="/login/signup"
+                className="px-4 py-2.5 bg-slate-900 text-white rounded-lg font-medium hover:bg-slate-800 transition-colors"
+              >
                 Daftar
-              </button>
-            </Link>
+              </Link>
+            </div>
           )}
         </nav>
 
@@ -56,37 +66,51 @@ export default function Navbar() {
         <div className="flex lg:hidden items-center">
           <button
             aria-label="Toggle menu"
+            aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
-            className="p-2 rounded-md bg-gray-100"
+            className="p-3 rounded-lg bg-slate-100 hover:bg-slate-200 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
           >
             <svg
               width="20"
               height="20"
               viewBox="0 0 24 24"
               fill="none"
-              xmlns="http://www.w3.org/2000/svg"
+              className="transition-transform duration-200"
+              style={{ transform: open ? "rotate(90deg)" : "rotate(0deg)" }}
             >
-              <path
-                d="M4 7H20"
-                stroke="#111827"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M4 12H20"
-                stroke="#111827"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M4 17H20"
-                stroke="#111827"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
+              {open ? (
+                <path
+                  d="M6 6L18 18M6 18L18 6"
+                  stroke="#1e293b"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              ) : (
+                <>
+                  <path
+                    d="M4 7H20"
+                    stroke="#1e293b"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M4 12H20"
+                    stroke="#1e293b"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M4 17H20"
+                    stroke="#1e293b"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </>
+              )}
             </svg>
           </button>
         </div>
@@ -94,10 +118,11 @@ export default function Navbar() {
 
       {/* Mobile dropdown */}
       {open && (
-        <div className="lg:hidden absolute right-0 mt-2 w-52 bg-white shadow-lg rounded-md p-3 z-50">
+        <div className="lg:hidden absolute right-0 mt-2 w-56 bg-white shadow-xl rounded-xl p-2 z-50 border border-slate-100 animate-in fade-in slide-in-from-top-2 duration-200">
           <Link
             href="/services"
-            className="block py-2 px-2 rounded hover:bg-gray-50"
+            onClick={() => setOpen(false)}
+            className="block py-3 px-4 rounded-lg hover:bg-slate-50 text-slate-700 font-medium transition-colors"
           >
             Lapangan
           </Link>
@@ -110,12 +135,13 @@ export default function Navbar() {
                     ? "/dashboard/provider"
                     : "/dashboard/user"
                 }
-                className="block py-2 px-2 rounded hover:bg-gray-50"
+                onClick={() => setOpen(false)}
+                className="block py-3 px-4 rounded-lg hover:bg-slate-50 text-slate-700 font-medium transition-colors"
               >
                 Dashboard
               </Link>
-              <div className="mt-3 pt-3 border-t">
-                <div className="px-2 text-sm text-gray-600 mb-2">
+              <div className="mt-2 pt-2 border-t border-slate-100">
+                <div className="px-4 py-2 text-sm text-slate-500">
                   {user?.full_name}
                 </div>
                 <button
@@ -123,23 +149,25 @@ export default function Navbar() {
                     logout();
                     setOpen(false);
                   }}
-                  className="w-full px-3 py-2 rounded bg-gray-100 text-gray-700"
+                  className="w-full mt-1 px-4 py-3 rounded-lg bg-slate-100 text-slate-700 font-medium hover:bg-slate-200 transition-colors text-left"
                 >
                   Keluar
                 </button>
               </div>
             </>
           ) : (
-            <div className="mt-3 flex gap-2">
+            <div className="mt-2 pt-2 border-t border-slate-100 flex gap-2 p-2">
               <Link
                 href="/login/signin"
-                className="flex-1 px-3 py-2 rounded border text-center"
+                onClick={() => setOpen(false)}
+                className="flex-1 px-4 py-3 rounded-lg border border-slate-200 text-center text-slate-700 font-medium hover:bg-slate-50 transition-colors"
               >
                 Masuk
               </Link>
               <Link
                 href="/login/signup"
-                className="flex-1 px-3 py-2 rounded bg-gray-900 text-white text-center"
+                onClick={() => setOpen(false)}
+                className="flex-1 px-4 py-3 rounded-lg bg-slate-900 text-white text-center font-medium hover:bg-slate-800 transition-colors"
               >
                 Daftar
               </Link>
