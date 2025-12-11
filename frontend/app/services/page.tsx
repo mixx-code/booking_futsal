@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { getFields, formatPrice, Field } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
+import Image from "next/image";
 
 export default function ServicesPage() {
   const { user, isLoggedIn } = useAuth();
@@ -25,6 +25,8 @@ export default function ServicesPage() {
     }
     fetchFields();
   }, []);
+
+  console.log("Fields data:", fields);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -108,15 +110,14 @@ export default function ServicesPage() {
                   {/* Image */}
                   <div className="relative h-36 sm:h-40 bg-slate-100 overflow-hidden">
                     {field.images && field.images.length > 0 ? (
-                      <Image
+                      <img
                         src={
                           typeof field.images[0] === "string"
                             ? field.images[0]
                             : field.images[0].url
                         }
                         alt={field.name}
-                        fill
-                        style={{ objectFit: "cover" }}
+
                         className="group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
@@ -160,7 +161,7 @@ export default function ServicesPage() {
                   </div>
 
                   {/* Content */}
-                  <div className="p-4">
+                  <div div className="p-4" >
                     <h3 className="font-semibold text-slate-900 text-lg">
                       {field.name}
                     </h3>
@@ -209,8 +210,9 @@ export default function ServicesPage() {
               ))}
             </div>
           </>
-        )}
-      </main>
-    </div>
+        )
+        }
+      </main >
+    </div >
   );
 }

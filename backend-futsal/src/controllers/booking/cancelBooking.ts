@@ -57,14 +57,14 @@ export const cancelBooking = async (req: Request, res: Response) => {
     console.log("Current Time:", currentTime.toISOString());
     console.log("Diff (hours):", hoursDifference);
 
-    if (hoursDifference < 1) {
-      console.log("CANCEL REJECTED: Too close to start time");
-      return res.status(400).json({
-        success: false,
-        message:
-          "Booking cannot be cancelled less than 1 hour before start time",
-      });
-    }
+    // if (hoursDifference < 1) {
+    //   console.log("CANCEL REJECTED: Too close to start time");
+    //   return res.status(400).json({
+    //     success: false,
+    //     message:
+    //       "Booking cannot be cancelled less than 1 hour before start time",
+    //   });
+    // }
 
     // Update booking status to cancelled
     const cancelledBooking = await prisma.bookings.update({
