@@ -31,7 +31,11 @@ export default function UserDashboard() {
     if (!isLoading && !isLoggedIn) {
       router.push("/login/signin");
     }
-  }, [isLoading, isLoggedIn, router]);
+    // Redirect admin users to provider dashboard
+    if (!isLoading && isLoggedIn && user?.role === "admin") {
+      router.push("/dashboard/provider");
+    }
+  }, [isLoading, isLoggedIn, user, router]);
 
   useEffect(() => {
     async function fetchData() {
@@ -100,36 +104,38 @@ export default function UserDashboard() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b">
+    <div className="min-h-screen bg-slate-50">
+      <header className="bg-white border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <Link href="/" className="text-2xl font-extrabold text-gray-900">
+              <Link
+                href="/"
+                className="text-xl sm:text-2xl font-extrabold text-slate-900 hover:text-slate-700 transition-colors"
+              >
                 BookingFutsal
               </Link>
-              <p className="text-sm text-gray-500 mt-0.5">
+              <p className="text-sm text-slate-500 mt-0.5">
                 Halo, {user?.full_name}
               </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <Link
                 href="/services"
-                className="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors"
+                className="hidden sm:block px-4 py-2.5 bg-slate-900 text-white text-sm font-semibold rounded-xl hover:bg-slate-800 transition-colors shadow-sm"
               >
                 Booking Sekarang
               </Link>
               <button
                 onClick={logout}
-                className="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200"
+                className="px-3 sm:px-4 py-2 bg-slate-100 text-slate-700 text-sm font-medium rounded-xl hover:bg-slate-200 transition-colors"
               >
                 Keluar
               </button>
@@ -139,17 +145,17 @@ export default function UserDashboard() {
       </header>
 
       {/* Tabs */}
-      <div className="bg-white border-b sticky top-0 z-10">
+      <div className="bg-white border-b border-slate-100 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <nav className="flex gap-1 overflow-x-auto">
+          <nav className="flex gap-1 overflow-x-auto no-scrollbar">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
                   activeTab === tab.id
-                    ? "text-gray-900 border-gray-900"
-                    : "text-gray-500 border-transparent hover:text-gray-700"
+                    ? "text-slate-900 border-slate-900"
+                    : "text-slate-500 border-transparent hover:text-slate-700 hover:border-slate-300"
                 }`}
               >
                 {tab.label}
@@ -163,7 +169,7 @@ export default function UserDashboard() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
         {loading ? (
           <div className="text-center py-16">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900"></div>
           </div>
         ) : error ? (
           <div className="text-center py-16 text-red-600">{error}</div>
@@ -173,24 +179,24 @@ export default function UserDashboard() {
             {activeTab === "overview" && (
               <div className="space-y-6">
                 {/* Stats */}
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                    <div className="text-sm text-gray-500">Total Booking</div>
-                    <div className="text-2xl font-bold text-gray-900 mt-1">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+                  <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                    <div className="text-sm text-slate-500">Total Booking</div>
+                    <div className="text-2xl sm:text-3xl font-bold text-slate-900 mt-1">
                       {bookings.length}
                     </div>
                   </div>
-                  <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                    <div className="text-sm text-gray-500">Akan Datang</div>
-                    <div className="text-2xl font-bold text-gray-900 mt-1">
+                  <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                    <div className="text-sm text-slate-500">Akan Datang</div>
+                    <div className="text-2xl sm:text-3xl font-bold text-slate-900 mt-1">
                       {upcomingBookings.length}
                     </div>
                   </div>
-                  <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 col-span-2 md:col-span-1">
-                    <div className="text-sm text-gray-500">
+                  <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 col-span-2 md:col-span-1">
+                    <div className="text-sm text-slate-500">
                       Total Pengeluaran
                     </div>
-                    <div className="text-2xl font-bold text-gray-900 mt-1">
+                    <div className="text-2xl sm:text-3xl font-bold text-slate-900 mt-1">
                       {formatPrice(
                         bookings
                           .filter((b) => b.status !== "cancelled")
@@ -210,24 +216,24 @@ export default function UserDashboard() {
                 {/* Upcoming Bookings */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-lg font-semibold text-gray-900">
+                    <h2 className="text-lg font-semibold text-slate-900">
                       Booking Mendatang
                     </h2>
                     <button
                       onClick={() => setActiveTab("bookings")}
-                      className="text-sm text-gray-600 hover:text-gray-900"
+                      className="text-sm text-slate-600 hover:text-slate-900 font-medium"
                     >
                       Lihat Semua →
                     </button>
                   </div>
                   {upcomingBookings.length === 0 ? (
-                    <div className="bg-white rounded-xl border border-gray-100 p-8 text-center">
-                      <p className="text-gray-500 mb-4">
+                    <div className="bg-white rounded-2xl border border-slate-100 p-8 text-center shadow-sm">
+                      <p className="text-slate-500 mb-4">
                         Tidak ada booking mendatang
                       </p>
                       <Link
                         href="/services"
-                        className="inline-block px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg"
+                        className="inline-block px-5 py-2.5 bg-slate-900 text-white text-sm font-semibold rounded-xl"
                       >
                         Cari Lapangan
                       </Link>
@@ -249,17 +255,17 @@ export default function UserDashboard() {
                 {/* Quick Browse */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-lg font-semibold text-gray-900">
+                    <h2 className="text-lg font-semibold text-slate-900">
                       Lapangan Tersedia
                     </h2>
                     <Link
                       href="/services"
-                      className="text-sm text-gray-600 hover:text-gray-900"
+                      className="text-sm text-slate-600 hover:text-slate-900 font-medium"
                     >
                       Lihat Semua →
                     </Link>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                     {fields.slice(0, 3).map((field) => (
                       <FieldCard key={field.id} field={field} />
                     ))}
@@ -272,11 +278,11 @@ export default function UserDashboard() {
             {activeTab === "bookings" && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900 mb-3">
+                  <h2 className="text-lg font-semibold text-slate-900 mb-3">
                     Akan Datang ({upcomingBookings.length})
                   </h2>
                   {upcomingBookings.length === 0 ? (
-                    <div className="bg-white rounded-xl border border-gray-100 p-6 text-center text-gray-500">
+                    <div className="bg-white rounded-2xl border border-slate-100 p-6 text-center text-slate-500 shadow-sm">
                       Tidak ada booking mendatang
                     </div>
                   ) : (
@@ -294,11 +300,11 @@ export default function UserDashboard() {
                 </div>
 
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900 mb-3">
+                  <h2 className="text-lg font-semibold text-slate-900 mb-3">
                     Riwayat ({pastBookings.length})
                   </h2>
                   {pastBookings.length === 0 ? (
-                    <div className="bg-white rounded-xl border border-gray-100 p-6 text-center text-gray-500">
+                    <div className="bg-white rounded-2xl border border-slate-100 p-6 text-center text-slate-500 shadow-sm">
                       Belum ada riwayat booking
                     </div>
                   ) : (
@@ -320,11 +326,11 @@ export default function UserDashboard() {
             {activeTab === "browse" && (
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold text-gray-900">
+                  <h2 className="text-lg font-semibold text-slate-900">
                     Semua Lapangan
                   </h2>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                   {fields.map((field) => (
                     <FieldCard key={field.id} field={field} />
                   ))}
@@ -353,19 +359,19 @@ function BookingCard({
   const statusConfig: Record<string, { label: string; className: string }> = {
     pending: {
       label: "Menunggu",
-      className: "bg-yellow-100 text-yellow-800",
+      className: "bg-amber-100 text-amber-700 ring-1 ring-amber-200",
     },
     confirmed: {
       label: "Dikonfirmasi",
-      className: "bg-green-100 text-green-800",
+      className: "bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200",
     },
     cancelled: {
       label: "Dibatalkan",
-      className: "bg-red-100 text-red-800",
+      className: "bg-red-100 text-red-700 ring-1 ring-red-200",
     },
     completed: {
       label: "Selesai",
-      className: "bg-gray-100 text-gray-800",
+      className: "bg-slate-100 text-slate-700 ring-1 ring-slate-200",
     },
   };
 
@@ -374,26 +380,32 @@ function BookingCard({
     booking.status === "pending" || booking.status === "confirmed";
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-5">
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 sm:p-5 hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-gray-900 text-lg truncate">
+          <h3 className="font-semibold text-slate-900 text-base sm:text-lg truncate">
             {booking.field?.name || `Lapangan #${booking.field_id}`}
           </h3>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <p className="text-sm text-slate-500 mt-0.5">
             {booking.field?.field_type}
           </p>
         </div>
         <span
-          className={`px-3 py-1 text-sm font-medium rounded-full ${config.className}`}
+          className={`px-3 py-1 text-xs sm:text-sm font-medium rounded-full shrink-0 ${config.className}`}
         >
           {config.label}
         </span>
       </div>
 
-      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 text-sm text-slate-600">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            className="shrink-0"
+          >
             <rect
               x="3"
               y="4"
@@ -419,8 +431,14 @@ function BookingCard({
           </svg>
           <span>{formatDate(booking.booking_date)}</span>
         </div>
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+        <div className="flex items-center gap-2 text-sm text-slate-600">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            className="shrink-0"
+          >
             <circle
               cx="12"
               cy="12"
@@ -442,27 +460,27 @@ function BookingCard({
         </div>
       </div>
 
-      <div className="mt-4 flex items-center justify-between pt-3 border-t border-gray-100">
-        <span className="text-sm text-gray-500">Total</span>
-        <span className="font-bold text-gray-900">
+      <div className="mt-4 flex items-center justify-between pt-3 border-t border-slate-100">
+        <span className="text-sm text-slate-500">Total</span>
+        <span className="font-bold text-slate-900 text-lg">
           {formatPrice(booking.total_price)}
         </span>
       </div>
 
       {showActions && canCancel && (
-        <div className="mt-4 flex gap-3">
+        <div className="mt-4 flex flex-col sm:flex-row gap-2 sm:gap-3">
           <Link
             href={`/bookings/${booking.id}`}
-            className="flex-1 px-4 py-2 text-center text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+            className="flex-1 px-4 py-2.5 text-center text-sm font-medium text-slate-700 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors"
           >
             Reschedule / Detail
           </Link>
           <button
             onClick={onCancel}
             disabled={isCancelling}
-            className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+            className={`flex-1 px-4 py-2.5 text-sm font-medium rounded-xl transition-colors ${
               isCancelling
-                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                ? "bg-slate-100 text-slate-400 cursor-not-allowed"
                 : "text-red-600 bg-red-50 hover:bg-red-100"
             }`}
           >
@@ -474,7 +492,7 @@ function BookingCard({
         <div className="mt-4">
           <Link
             href={`/bookings/${booking.id}`}
-            className="block w-full px-4 py-2 text-center text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+            className="block w-full px-4 py-2.5 text-center text-sm font-medium text-slate-700 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors"
           >
             Lihat Detail
           </Link>
@@ -487,16 +505,20 @@ function BookingCard({
 // Field Card Component
 function FieldCard({ field }: { field: Field }) {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
-      <div className="relative h-32 bg-gray-100">
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-lg transition-all duration-200 group">
+      <div className="relative h-32 bg-slate-100 overflow-hidden">
         {field.images && field.images.length > 0 ? (
           <img
-            src={field.images[0].url}
+            src={
+              typeof field.images[0] === "string"
+                ? field.images[0]
+                : field.images[0].url
+            }
             alt={field.name}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-400">
+          <div className="w-full h-full flex items-center justify-center text-slate-400">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
               <rect
                 x="3"
@@ -511,22 +533,22 @@ function FieldCard({ field }: { field: Field }) {
           </div>
         )}
         <div className="absolute top-2 left-2">
-          <span className="px-2 py-1 bg-gray-900 text-white text-xs font-medium rounded-full">
+          <span className="px-2.5 py-1 bg-slate-900/90 backdrop-blur-sm text-white text-xs font-medium rounded-full">
             {field.field_type}
           </span>
         </div>
       </div>
-      <div className="p-3">
-        <h3 className="font-semibold text-gray-900">{field.name}</h3>
+      <div className="p-4">
+        <h3 className="font-semibold text-slate-900">{field.name}</h3>
         <div className="mt-2 flex items-center justify-between">
-          <span className="text-sm text-gray-500">Per jam</span>
-          <span className="font-bold text-gray-900">
+          <span className="text-sm text-slate-500">Per jam</span>
+          <span className="font-bold text-slate-900 text-lg">
             {formatPrice(field.price_per_hour)}
           </span>
         </div>
         <Link
           href={`/services/${field.id}`}
-          className="mt-3 block w-full px-3 py-2 text-sm font-medium text-center text-white bg-gray-900 rounded-lg hover:bg-gray-800"
+          className="mt-3 block w-full px-4 py-2.5 text-sm font-semibold text-center text-white bg-slate-900 rounded-xl hover:bg-slate-800 transition-colors shadow-sm"
         >
           Booking
         </Link>

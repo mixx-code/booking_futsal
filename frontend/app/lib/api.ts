@@ -109,7 +109,22 @@ export function removeToken(): void {
 export function getUser(): User | null {
   if (typeof window === "undefined") return null;
   const userStr = localStorage.getItem("user");
-  return userStr ? JSON.parse(userStr) : null;
+
+  // Handle invalid/corrupted localStorage values
+  if (!userStr || userStr === "undefined" || userStr === "null") {
+    // Clean up invalid data
+    localStorage.removeItem("user");
+    return null;
+  }
+
+  try {
+    return JSON.parse(userStr);
+  } catch (e) {
+    // If JSON parsing fails, remove corrupted data
+    console.error("Failed to parse user from localStorage:", e);
+    localStorage.removeItem("user");
+    return null;
+  }
 }
 
 export function setUser(user: User): void {
@@ -208,6 +223,27 @@ export async function getFields(): Promise<Field[]> {
   }
 
   return data.data || [];
+}
+
+export async function deleteField(fieldId: number): Promise<void> {
+  const token = getToken();
+
+  if (!token) {
+    throw new Error("Not authenticated");
+  }
+
+  const res = await fetch(`${API_BASE}/delete-field/${fieldId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data: ApiResponse<any> = await res.json();
+
+  if (!data.success) {
+    throw new Error(data.message || "Failed to delete field");
+  }
 }
 
 export async function createSchedule(params: {

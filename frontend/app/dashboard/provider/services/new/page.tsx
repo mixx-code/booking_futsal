@@ -160,12 +160,8 @@ export default function NewServicePage() {
                   required
                   className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none transition-shadow bg-white"
                 >
-                  <option value="Futsal">Futsal</option>
-                  <option value="Mini Soccer">Mini Soccer</option>
-                  <option value="Badminton">Badminton</option>
-                  <option value="Basket">Basket</option>
-                  <option value="Tennis">Tennis</option>
-                  <option value="Lainnya">Lainnya</option>
+                  <option value="Futsal">In Door</option>
+                  <option value="Mini Soccer">Out Door</option>
                 </select>
               </div>
             </div>

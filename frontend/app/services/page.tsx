@@ -27,12 +27,15 @@ export default function ServicesPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50">
       {/* Header */}
-      <header className="bg-white border-b">
+      <header className="bg-white border-b border-slate-100 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between">
-            <Link href="/" className="text-2xl font-extrabold text-gray-900">
+            <Link
+              href="/"
+              className="text-xl sm:text-2xl font-extrabold text-slate-900 hover:text-slate-700 transition-colors"
+            >
               BookingFutsal
             </Link>
             <div className="flex items-center gap-3">
@@ -43,14 +46,14 @@ export default function ServicesPage() {
                       ? "/dashboard/provider"
                       : "/dashboard/user"
                   }
-                  className="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors"
+                  className="px-4 py-2.5 bg-slate-100 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-200 transition-colors"
                 >
                   Dashboard
                 </Link>
               ) : (
                 <Link
                   href="/login/signin"
-                  className="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors"
+                  className="px-4 py-2.5 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 transition-colors"
                 >
                   Masuk
                 </Link>
@@ -61,12 +64,12 @@ export default function ServicesPage() {
       </header>
 
       {/* Hero */}
-      <div className="bg-gray-900 text-white py-12">
+      <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white py-10 sm:py-12 lg:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <h1 className="display-font text-3xl md:text-4xl font-extrabold">
+          <h1 className="display-font text-2xl sm:text-3xl md:text-4xl font-extrabold">
             Temukan Lapangan
           </h1>
-          <p className="mt-2 text-gray-300 max-w-xl">
+          <p className="mt-2 sm:mt-3 text-slate-300 max-w-xl text-sm sm:text-base">
             Pilih lapangan yang sesuai dengan kebutuhan Anda dan booking
             sekarang.
           </p>
@@ -74,11 +77,11 @@ export default function ServicesPage() {
       </div>
 
       {/* Fields Grid */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {loading ? (
           <div className="text-center py-16">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-            <p className="mt-4 text-gray-600">Memuat data...</p>
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900"></div>
+            <p className="mt-4 text-slate-600">Memuat data...</p>
           </div>
         ) : error ? (
           <div className="text-center py-16">
@@ -86,33 +89,38 @@ export default function ServicesPage() {
           </div>
         ) : fields.length === 0 ? (
           <div className="text-center py-16">
-            <p className="text-gray-600">Tidak ada lapangan tersedia</p>
+            <p className="text-slate-600">Tidak ada lapangan tersedia</p>
           </div>
         ) : (
           <>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">
+              <h2 className="text-lg sm:text-xl font-semibold text-slate-900">
                 {fields.length} Lapangan Tersedia
               </h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {fields.map((field) => (
                 <div
                   key={field.id}
-                  className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-shadow"
+                  className="bg-white rounded-2xl shadow-sm overflow-hidden border border-slate-100 hover:shadow-lg hover:border-slate-200 transition-all duration-200 group"
                 >
                   {/* Image */}
-                  <div className="relative h-40 bg-gray-100">
+                  <div className="relative h-36 sm:h-40 bg-slate-100 overflow-hidden">
                     {field.images && field.images.length > 0 ? (
                       <Image
-                        src={field.images[0].url}
+                        src={
+                          typeof field.images[0] === "string"
+                            ? field.images[0]
+                            : field.images[0].url
+                        }
                         alt={field.name}
                         fill
                         style={{ objectFit: "cover" }}
+                        className="group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400">
+                      <div className="w-full h-full flex items-center justify-center text-slate-400">
                         <svg
                           width="48"
                           height="48"
@@ -145,7 +153,7 @@ export default function ServicesPage() {
                       </div>
                     )}
                     <div className="absolute top-3 left-3">
-                      <span className="px-2 py-1 bg-gray-900 text-white text-xs font-medium rounded-full">
+                      <span className="px-2.5 py-1 bg-slate-900/90 backdrop-blur-sm text-white text-xs font-medium rounded-full">
                         {field.field_type}
                       </span>
                     </div>
@@ -153,15 +161,15 @@ export default function ServicesPage() {
 
                   {/* Content */}
                   <div className="p-4">
-                    <h3 className="font-semibold text-gray-900 text-lg">
+                    <h3 className="font-semibold text-slate-900 text-lg">
                       {field.name}
                     </h3>
-                    <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+                    <p className="text-sm text-slate-500 mt-1 line-clamp-2">
                       {field.description}
                     </p>
 
-                    <div className="mt-3 flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <div className="mt-4 flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-sm text-slate-500">
                         <svg
                           width="16"
                           height="16"
@@ -185,14 +193,14 @@ export default function ServicesPage() {
                         </svg>
                         <span>Per jam</span>
                       </div>
-                      <div className="font-bold text-gray-900">
+                      <div className="font-bold text-slate-900 text-lg">
                         {formatPrice(field.price_per_hour)}
                       </div>
                     </div>
 
                     <Link
                       href={`/services/${field.id}`}
-                      className="mt-4 block w-full px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition-colors text-center"
+                      className="mt-4 block w-full px-4 py-3 text-sm font-semibold text-white bg-slate-900 rounded-xl hover:bg-slate-800 transition-colors text-center shadow-sm"
                     >
                       Lihat Detail
                     </Link>
