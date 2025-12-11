@@ -263,8 +263,8 @@ export default function ServiceDetailPage() {
             {/* Time Slot Picker */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
               <h3 className="font-semibold text-gray-900 mb-4">
-                Pilih Waktu Booking
-              </h3>
+
+              </h3>Pilih Waktu Booking
 
               {/* Date selector */}
               <div className="mb-4">
@@ -308,18 +308,21 @@ export default function ServiceDetailPage() {
                       const isSelected =
                         selectedSlot?.start_time === slot.start_time;
                       const timeLabel = formatTime(slot.start_time);
+                      const sudahLewat = timeLabel <= formatTime(new Date().toISOString()) && selectedDate === new Date().toISOString().split("T")[0]
 
                       return (
                         <button
                           key={index}
                           onClick={() => setSelectedSlot(slot)}
-                          className={`px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${
+                          disabled={sudahLewat}
+                          className={`px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${sudahLewat ? "bg-red-200 text-red-400 border-red-200 cursor-not-allowed" : ""}  ${
                             isSelected
                               ? "bg-gray-900 text-white border-gray-900"
                               : "bg-white text-gray-700 border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                           }`}
                         >
                           {timeLabel}
+                          <p>{sudahLewat ? " (sudah lewat)" : ""}</p>
                         </button>
                       );
                     })}
