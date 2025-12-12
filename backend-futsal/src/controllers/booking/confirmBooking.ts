@@ -3,10 +3,10 @@ import { prisma } from "../../prisma/client";
 import { verifyToken } from "../../utils/jwt";
 
 /**
- * Cancel a booking
- * Users can cancel their own pending/confirmed bookings
+ * Confirm a booking (admin only)
+ * Admin can confirm pending bookings
  */
-export const cancelBooking = async (req: Request, res: Response) => {
+export const confirmBooking = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const token = req.headers.authorization?.split(" ")[1];
@@ -19,42 +19,39 @@ export const cancelBooking = async (req: Request, res: Response) => {
     }
 
     const decoded = verifyToken(token);
-    const customerId = decoded.id;
 
-    // Find booking and verify ownership
-    const booking = await prisma.bookings.findFirst({
-      where: {
-        id: parseInt(id),
-        customer_id: Number(customerId),
-      },
+    // Only admin can confirm bookings
+    if (decoded.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Only admin can confirm bookings",
+      });
+    }
+
+    // Find booking
+    const booking = await prisma.bookings.findUnique({
+      where: { id: parseInt(id) },
     });
 
     if (!booking) {
       return res.status(404).json({
         success: false,
-        message: "Booking not found or unauthorized",
+        message: "Booking not found",
       });
     }
 
-    // Validate booking status
-    if (booking.status === "cancelled") {
+    // Only pending bookings can be confirmed
+    if (booking.status !== "pending") {
       return res.status(400).json({
         success: false,
-        message: "Booking is already cancelled",
+        message: "Only pending bookings can be confirmed",
       });
     }
 
-    if (booking.status === "completed") {
-      return res.status(400).json({
-        success: false,
-        message: "Cannot cancel completed booking",
-      });
-    }
-
-    // Cancel the booking
-    const cancelledBooking = await prisma.bookings.update({
+    // Confirm the booking
+    const confirmedBooking = await prisma.bookings.update({
       where: { id: parseInt(id) },
-      data: { status: "cancelled" },
+      data: { status: "confirmed" },
       include: {
         field: {
           select: {
@@ -75,13 +72,13 @@ export const cancelBooking = async (req: Request, res: Response) => {
 
     res.status(200).json({
       success: true,
-      message: "Booking cancelled successfully",
-      data: cancelledBooking,
+      message: "Booking confirmed successfully",
+      data: confirmedBooking,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Error cancelling booking",
+      message: "Error confirming booking",
       error: error instanceof Error ? error.message : error,
     });
   }

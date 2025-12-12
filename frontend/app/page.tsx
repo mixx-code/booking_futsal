@@ -285,68 +285,509 @@ export default function Home() {
             </div>
           </div>
         </section>
-      </main>
 
-      {/* Footer */}
-      <footer className="bg-slate-900 text-slate-300 mt-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex flex-col sm:flex-row items-center gap-3">
-              <div className="text-xl font-bold text-white">BookingFutsal</div>
-              <div className="text-sm text-slate-400">
-                © {new Date().getFullYear()} BookingFutsal. Semua hak
-                dilindungi.
+        {/* Social Proof Section */}
+        <section className="py-12 sm:py-16 border-t border-slate-100 bg-slate-50/50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
+            {/* Intro Description */}
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12 mb-12 sm:mb-16">
+              {/* Left - Description Paragraph */}
+              <div className="lg:col-span-3">
+                <p className="text-base sm:text-lg leading-relaxed text-slate-600">
+                  <span className="text-slate-900 font-semibold">
+                    BookingFutsal
+                  </span>{" "}
+                  adalah platform{" "}
+                  <span className="text-slate-900 font-medium">
+                    pemesanan lapangan futsal tercepat dan termudah
+                  </span>{" "}
+                  untuk komunitas olahraga, tim futsal, dan siapa saja yang
+                  ingin bermain.{" "}
+                  <span className="text-slate-900 font-medium">
+                    Cari lapangan terdekat
+                  </span>{" "}
+                  dengan harga terbaik, atau jelajahi berbagai pilihan venue di
+                  kotamu. Lihat ketersediaan slot waktu, cek fasilitas, dan{" "}
+                  <span className="text-slate-900 font-medium">
+                    booking langsung dalam hitungan detik
+                  </span>
+                  . Kelola jadwal pertandinganmu dan bayar dengan aman—semua
+                  dalam satu platform yang{" "}
+                  <span className="text-slate-900 font-medium">
+                    simpel dan modern
+                  </span>
+                  . Yuk, main futsal!
+                </p>
+              </div>
+
+              {/* Right - Highlight Card */}
+              <div className="lg:col-span-2">
+                <div className="bg-white rounded-2xl p-5 shadow-md border border-slate-100">
+                  <p className="text-xs font-semibold tracking-[0.15em] text-slate-400 uppercase mb-4">
+                    Slot Populer Hari Ini
+                  </p>
+                  <div className="flex items-start gap-4">
+                    <div className="w-14 h-14 rounded-xl bg-emerald-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-emerald-500/30">
+                      <svg
+                        width="28"
+                        height="28"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        className="text-white"
+                      >
+                        <circle
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                        />
+                        <path
+                          d="M12 6v6l4 2"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-bold text-slate-900 text-lg">
+                        Sore 17:00 - 19:00
+                      </h4>
+                      <p className="text-sm text-slate-500 mt-1">
+                        Waktu favorit untuk bermain futsal bersama rekan kerja
+                        setelah jam kantor. Booking lebih awal untuk
+                        ketersediaan!
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
+                    <span className="text-xs text-slate-400 font-medium">
+                      Terisi 85% hari ini
+                    </span>
+                    <div className="h-1.5 w-24 bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-full w-[85%] bg-emerald-500 rounded-full"></div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="hidden md:block text-sm text-slate-400">
-              oleh Rizki & Danar
-            </div>
+            {/* Headline */}
+            <p className="text-center text-xs sm:text-sm font-semibold tracking-[0.2em] text-slate-400 uppercase mb-8 sm:mb-10">
+              Dipercaya oleh <span className="text-slate-600">1.000+</span>{" "}
+              Komunitas Futsal &amp; Mitra Terpercaya
+            </p>
+          </div>
 
-            <div className="flex gap-3">
-              <a
-                href="#"
-                className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-white hover:bg-slate-700 transition-colors"
-                aria-label="Instagram"
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M7 2h10a5 5 0 015 5v10a5 5 0 01-5 5H7a5 5 0 01-5-5V7a5 5 0 015-5z"
+          {/* Marquee Container */}
+          <div className="marquee-container">
+            <div className="animate-marquee flex items-center gap-12 sm:gap-16 md:gap-20 w-max">
+              {/* First set of logos */}
+              <div className="flex items-center gap-2 text-slate-600 px-4">
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="flex-shrink-0"
+                >
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="10"
                     stroke="currentColor"
-                    strokeWidth="1.2"
+                    strokeWidth="1.5"
                   />
                   <path
-                    d="M12 8.5a3.5 3.5 0 100 7 3.5 3.5 0 000-7z"
+                    d="M12 6v6l4 2"
                     stroke="currentColor"
-                    strokeWidth="1.2"
-                  />
-                  <path
-                    d="M17.5 6.5h.01"
-                    stroke="currentColor"
-                    strokeWidth="1.2"
+                    strokeWidth="1.5"
                     strokeLinecap="round"
                   />
                 </svg>
-              </a>
-              <a
-                href="#"
-                className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-white hover:bg-slate-700 transition-colors"
-                aria-label="Facebook"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M16 8a6 6 0 10-8 0v4H7v4h3v6h4v-6h3l1-4h-4V8z"
+                <span className="font-bold text-sm sm:text-base whitespace-nowrap">
+                  Kemenpora RI
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 text-slate-600 px-4">
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="flex-shrink-0"
+                >
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="10"
                     stroke="currentColor"
-                    strokeWidth="1.2"
+                    strokeWidth="1.5"
+                  />
+                  <path
+                    d="M12 2a10 10 0 0110 10l-5 2-5-2-5 2a10 10 0 0110-10z"
+                    fill="currentColor"
+                    fillOpacity="0.2"
+                  />
+                </svg>
+                <span className="font-bold text-sm sm:text-base">PSSI</span>
+              </div>
+
+              <div className="flex items-center gap-2 text-slate-600 px-4">
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="flex-shrink-0"
+                >
+                  <rect
+                    x="3"
+                    y="3"
+                    width="18"
+                    height="18"
+                    rx="3"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                  />
+                  <path
+                    d="M8 12h8M12 8v8"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <span className="font-bold text-sm sm:text-base whitespace-nowrap">
+                  Liga Futsal ID
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 text-slate-600 px-4">
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="flex-shrink-0"
+                >
+                  <path
+                    d="M3 21h18M5 21V7l7-4 7 4v14"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
+                  <rect
+                    x="9"
+                    y="13"
+                    width="6"
+                    height="8"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                  />
                 </svg>
-              </a>
+                <span className="font-bold text-sm sm:text-base whitespace-nowrap">
+                  GOR Jakarta
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 text-slate-600 px-4">
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="flex-shrink-0"
+                >
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="8"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                  />
+                  <path
+                    d="M12 4v4M12 16v4M4 12h4M16 12h4"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <span className="font-bold text-sm sm:text-base">SportHub</span>
+              </div>
+
+              <div className="flex items-center gap-2 text-slate-600 px-4">
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="flex-shrink-0"
+                >
+                  <polygon
+                    points="12,2 15,8.5 22,9.5 17,14 18.5,21 12,17.5 5.5,21 7,14 2,9.5 9,8.5"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <span className="font-bold text-sm sm:text-base">
+                  FutsalPro
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 text-slate-600 px-4">
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="flex-shrink-0"
+                >
+                  <path
+                    d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                  />
+                  <path
+                    d="M12 6l2 4 4 .5-3 2.5 1 4-4-2-4 2 1-4-3-2.5 4-.5 2-4z"
+                    fill="currentColor"
+                    fillOpacity="0.3"
+                  />
+                </svg>
+                <span className="font-bold text-sm sm:text-base whitespace-nowrap">
+                  Arena Sports
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 text-slate-600 px-4">
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="flex-shrink-0"
+                >
+                  <rect
+                    x="2"
+                    y="6"
+                    width="20"
+                    height="12"
+                    rx="2"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                  />
+                  <path d="M10 9l5 3-5 3V9z" fill="currentColor" />
+                </svg>
+                <span className="font-bold text-sm sm:text-base">PlayZone</span>
+              </div>
+
+              {/* Duplicate set for seamless loop */}
+              <div className="flex items-center gap-2 text-slate-600 px-4">
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="flex-shrink-0"
+                >
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                  />
+                  <path
+                    d="M12 6v6l4 2"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <span className="font-bold text-sm sm:text-base whitespace-nowrap">
+                  Kemenpora RI
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 text-slate-600 px-4">
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="flex-shrink-0"
+                >
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                  />
+                  <path
+                    d="M12 2a10 10 0 0110 10l-5 2-5-2-5 2a10 10 0 0110-10z"
+                    fill="currentColor"
+                    fillOpacity="0.2"
+                  />
+                </svg>
+                <span className="font-bold text-sm sm:text-base">PSSI</span>
+              </div>
+
+              <div className="flex items-center gap-2 text-slate-600 px-4">
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="flex-shrink-0"
+                >
+                  <rect
+                    x="3"
+                    y="3"
+                    width="18"
+                    height="18"
+                    rx="3"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                  />
+                  <path
+                    d="M8 12h8M12 8v8"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <span className="font-bold text-sm sm:text-base whitespace-nowrap">
+                  Liga Futsal ID
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 text-slate-600 px-4">
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="flex-shrink-0"
+                >
+                  <path
+                    d="M3 21h18M5 21V7l7-4 7 4v14"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <rect
+                    x="9"
+                    y="13"
+                    width="6"
+                    height="8"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                  />
+                </svg>
+                <span className="font-bold text-sm sm:text-base whitespace-nowrap">
+                  GOR Jakarta
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 text-slate-600 px-4">
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="flex-shrink-0"
+                >
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="8"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                  />
+                  <path
+                    d="M12 4v4M12 16v4M4 12h4M16 12h4"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <span className="font-bold text-sm sm:text-base">SportHub</span>
+              </div>
+
+              <div className="flex items-center gap-2 text-slate-600 px-4">
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="flex-shrink-0"
+                >
+                  <polygon
+                    points="12,2 15,8.5 22,9.5 17,14 18.5,21 12,17.5 5.5,21 7,14 2,9.5 9,8.5"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <span className="font-bold text-sm sm:text-base">
+                  FutsalPro
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 text-slate-600 px-4">
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="flex-shrink-0"
+                >
+                  <path
+                    d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                  />
+                  <path
+                    d="M12 6l2 4 4 .5-3 2.5 1 4-4-2-4 2 1-4-3-2.5 4-.5 2-4z"
+                    fill="currentColor"
+                    fillOpacity="0.3"
+                  />
+                </svg>
+                <span className="font-bold text-sm sm:text-base whitespace-nowrap">
+                  Arena Sports
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 text-slate-600 px-4">
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="flex-shrink-0"
+                >
+                  <rect
+                    x="2"
+                    y="6"
+                    width="20"
+                    height="12"
+                    rx="2"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                  />
+                  <path d="M10 9l5 3-5 3V9z" fill="currentColor" />
+                </svg>
+                <span className="font-bold text-sm sm:text-base">PlayZone</span>
+              </div>
             </div>
           </div>
-        </div>
-      </footer>
+        </section>
+      </main>
     </div>
   );
 }

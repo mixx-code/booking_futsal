@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Montserrat, Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "./context/AuthContext";
+import Footer from "./components/Footer";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -30,7 +31,10 @@ export default function RootLayout({
   return (
     <html lang="id" suppressHydrationWarning>
       <body className={`${montserrat.variable} ${inter.variable} antialiased`}>
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          {children}
+          <Footer />
+        </AuthProvider>
       </body>
     </html>
   );
