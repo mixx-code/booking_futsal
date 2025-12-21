@@ -9,12 +9,13 @@ import {
   getFields,
   createField,
   createSchedule,
-  cancelBooking,
-  updateBookingStatus,
+  confirmBooking,
+  rejectBooking,
   deleteField,
   formatPrice,
   formatDate,
   formatTime,
+  translateError,
   Booking,
   Field,
   Schedule,
@@ -57,7 +58,7 @@ export default function ProviderDashboard() {
       setBookings(bookingsData);
       setFields(fieldsData);
     } catch (err: any) {
-      setError(err.message);
+      setError(translateError(err.message));
     } finally {
       setLoading(false);
     }
@@ -80,7 +81,7 @@ export default function ProviderDashboard() {
     );
 
   const tabs: { id: TabType; label: string }[] = [
-    { id: "overview", label: "Overview" },
+    { id: "overview", label: "Ringkasan" },
     { id: "bookings", label: "Semua Booking" },
     { id: "fields", label: "Lapangan" },
     { id: "create", label: "+ Tambah Lapangan" },
@@ -89,7 +90,7 @@ export default function ProviderDashboard() {
 
   async function handleConfirmBooking(booking: Booking) {
     try {
-      await updateBookingStatus(booking.id, "confirmed");
+      await confirmBooking(booking.id);
       setBookings((prev) =>
         prev.map((b) =>
           b.id === booking.id ? { ...b, status: "confirmed" } : b
@@ -97,22 +98,22 @@ export default function ProviderDashboard() {
       );
       alert("Booking berhasil dikonfirmasi");
     } catch (err: any) {
-      alert(err.message || "Gagal mengkonfirmasi booking");
+      alert(translateError(err.message) || "Gagal mengkonfirmasi booking");
     }
   }
 
-  async function handleCancelBooking(booking: Booking) {
-    if (!confirm("Yakin ingin membatalkan booking ini?")) return;
+  async function handleRejectBooking(booking: Booking) {
+    if (!confirm("Yakin ingin menolak booking ini?")) return;
     try {
-      await cancelBooking(booking.id);
+      await rejectBooking(booking.id);
       setBookings((prev) =>
         prev.map((b) =>
-          b.id === booking.id ? { ...b, status: "cancelled" } : b
+          b.id === booking.id ? { ...b, status: "rejected" } : b
         )
       );
-      alert("Booking dibatalkan");
+      alert("Booking ditolak");
     } catch (err: any) {
-      alert(err.message || "Gagal membatalkan booking");
+      alert(translateError(err.message) || "Gagal menolak booking");
     }
   }
 
@@ -161,7 +162,7 @@ export default function ProviderDashboard() {
       {/* Tabs */}
       <div className="bg-white border-b border-slate-100 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <nav className="flex gap-1 overflow-x-auto no-scrollbar">
+          <nav className="flex gap-1 overflow-x-auto pb-1">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
@@ -253,7 +254,7 @@ export default function ProviderDashboard() {
                           key={booking.id}
                           booking={booking}
                           onConfirm={() => handleConfirmBooking(booking)}
-                          onCancel={() => handleCancelBooking(booking)}
+                          onReject={() => handleRejectBooking(booking)}
                         />
                       ))}
                     </div>
@@ -284,7 +285,7 @@ export default function ProviderDashboard() {
                           key={booking.id}
                           booking={booking}
                           onConfirm={() => handleConfirmBooking(booking)}
-                          onCancel={() => handleCancelBooking(booking)}
+                          onReject={() => handleRejectBooking(booking)}
                         />
                       ))}
                     </div>
@@ -310,7 +311,7 @@ export default function ProviderDashboard() {
                         key={booking.id}
                         booking={booking}
                         onConfirm={() => handleConfirmBooking(booking)}
-                        onCancel={() => handleCancelBooking(booking)}
+                        onReject={() => handleRejectBooking(booking)}
                       />
                     ))}
                   </div>
@@ -396,7 +397,7 @@ function CreateFieldForm({ onSuccess }: { onSuccess: () => void }) {
       form.reset();
       onSuccess();
     } catch (err: any) {
-      setError(err.message || "Gagal menambahkan lapangan");
+      setError(translateError(err.message) || "Gagal menambahkan lapangan");
     } finally {
       setSubmitting(false);
     }
@@ -512,26 +513,44 @@ function CreateFieldForm({ onSuccess }: { onSuccess: () => void }) {
 function AdminBookingCard({
   booking,
   onConfirm,
-  onCancel,
+  onReject,
 }: {
   booking: Booking;
   onConfirm: () => void;
-  onCancel: () => void;
+  onReject: () => void;
 }) {
+  const router = useRouter();
   const statusConfig: Record<string, { label: string; className: string }> = {
     pending: { label: "Menunggu", className: "bg-yellow-100 text-yellow-800" },
     confirmed: {
       label: "Dikonfirmasi",
       className: "bg-green-100 text-green-800",
     },
-    cancelled: { label: "Dibatalkan", className: "bg-red-100 text-red-800" },
+    cancelled: {
+      label: "Dibatalkan User",
+      className: "bg-orange-100 text-orange-800",
+    },
+    rejected: { label: "Ditolak Admin", className: "bg-red-100 text-red-800" },
     completed: { label: "Selesai", className: "bg-gray-100 text-gray-800" },
   };
 
   const config = statusConfig[booking.status] || statusConfig.pending;
   const canConfirm = booking.status === "pending";
-  const canCancel =
-    booking.status === "pending" || booking.status === "confirmed";
+  const canReject = booking.status === "pending";
+
+  function handleCardClick() {
+    router.push(`/bookings/${booking.id}`);
+  }
+
+  function handleConfirmClick(e: React.MouseEvent) {
+    e.stopPropagation();
+    onConfirm();
+  }
+
+  function handleRejectClick(e: React.MouseEvent) {
+    e.stopPropagation();
+    onReject();
+  }
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-5">
@@ -567,7 +586,7 @@ function AdminBookingCard({
           </svg>
           <span>{formatDate(booking.booking_date)}</span>
         </div>
-        <div className="flex items-center gap-2 text-sm text-gray-600">
+        <div className="flex items-center gap-2 text-sm text-gray-600 md:justify-end">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
             <circle
               cx="12"
@@ -596,18 +615,18 @@ function AdminBookingCard({
         <div className="flex gap-2">
           {canConfirm && (
             <button
-              onClick={onConfirm}
+              onClick={handleConfirmClick}
               className="px-3 py-1.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700"
             >
               Konfirmasi
             </button>
           )}
-          {canCancel && (
+          {canReject && (
             <button
-              onClick={onCancel}
+              onClick={handleRejectClick}
               className="px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100"
             >
-              Batalkan
+              Tolak
             </button>
           )}
         </div>
@@ -625,8 +644,11 @@ function FieldCard({
   onDelete: (id: number) => void;
 }) {
   const [deleting, setDeleting] = useState(false);
+  const router = useRouter();
 
-  async function handleDelete() {
+  async function handleDelete(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
     if (!confirm(`Yakin ingin menghapus lapangan "${field.name}"?`)) return;
 
     setDeleting(true);
@@ -634,14 +656,21 @@ function FieldCard({
       await deleteField(field.id);
       onDelete(field.id);
     } catch (err: any) {
-      alert(err.message || "Gagal menghapus lapangan");
+      alert(translateError(err.message) || "Gagal menghapus lapangan");
     } finally {
       setDeleting(false);
     }
   }
 
+  function handleCardClick() {
+    router.push(`/dashboard/provider/services/${field.id}`);
+  }
+
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition-shadow">
+    <div
+      onClick={handleCardClick}
+      className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+    >
       <div className="relative h-32 bg-slate-100">
         {field.images && field.images.length > 0 ? (
           <img
@@ -692,13 +721,22 @@ function FieldCard({
             {formatPrice(field.price_per_hour)}
           </span>
         </div>
-        <button
-          onClick={handleDelete}
-          disabled={deleting}
-          className="mt-3 w-full px-3 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-xl hover:bg-red-100 transition-colors disabled:opacity-50"
-        >
-          {deleting ? "Menghapus..." : "Hapus Lapangan"}
-        </button>
+        <div className="mt-3 flex gap-2">
+          <Link
+            href={`/dashboard/provider/services/${field.id}`}
+            onClick={(e) => e.stopPropagation()}
+            className="flex-1 px-3 py-2 text-sm font-medium text-slate-700 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors text-center"
+          >
+            Edit
+          </Link>
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className="flex-1 px-3 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-xl hover:bg-red-100 transition-colors disabled:opacity-50"
+          >
+            {deleting ? "..." : "Hapus"}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -762,6 +800,11 @@ function CreateScheduleForm({
           days.find((d) => d.value === dayOfWeek)?.label
         } berhasil ditambahkan`
       );
+      alert(
+        `Jadwal untuk hari ${
+          days.find((d) => d.value === dayOfWeek)?.label
+        } berhasil disimpan!`
+      );
       onSuccess();
 
       // Reset form
@@ -774,7 +817,7 @@ function CreateScheduleForm({
           } sudah ada. Harap hapus atau edit jadwal yang ada.`
         );
       } else {
-        setError(err.message || "Gagal membuat jadwal");
+        setError(translateError(err.message) || "Gagal membuat jadwal");
       }
     } finally {
       setSubmitting(false);

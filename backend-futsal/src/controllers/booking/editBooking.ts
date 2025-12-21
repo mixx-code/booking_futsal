@@ -2,31 +2,33 @@ import { Request, Response } from "express";
 import { prisma } from "../../prisma/client";
 import { verifyToken } from "../../utils/jwt";
 
+/**
+ * Update/reschedule a booking
+ * Users can modify their own pending/confirmed bookings
+ */
 export const updateBooking = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { field_id, booking_date, start_time, end_time, duration } = req.body;
-
     const token = req.headers.authorization?.split(" ")[1];
-    const decoded = verifyToken(String(token));
-    const customer_id = decoded.id;
 
-    if (!customer_id) {
+    if (!token) {
       return res.status(401).json({
         success: false,
         message: "User not authenticated",
       });
     }
 
-    // Check if booking exists and belongs to user
+    const decoded = verifyToken(token);
+    const customerId = decoded.id;
+
+    // Find booking and verify ownership
     const existingBooking = await prisma.bookings.findFirst({
       where: {
         id: parseInt(id),
-        customer_id: Number(customer_id),
+        customer_id: Number(customerId),
       },
-      include: {
-        field: true,
-      },
+      include: { field: true },
     });
 
     if (!existingBooking) {
@@ -36,7 +38,7 @@ export const updateBooking = async (req: Request, res: Response) => {
       });
     }
 
-    // Check if booking can be modified
+    // Validate booking status
     if (
       existingBooking.status === "cancelled" ||
       existingBooking.status === "completed"
@@ -44,26 +46,6 @@ export const updateBooking = async (req: Request, res: Response) => {
       return res.status(400).json({
         success: false,
         message: `Cannot modify ${existingBooking.status} booking`,
-      });
-    }
-
-    // Check if the new time is at least 1 hour before the booking starts
-    const bookingStartTime = new Date(existingBooking.start_time);
-    const currentTime = new Date();
-    const timeDifference = bookingStartTime.getTime() - currentTime.getTime();
-    const hoursDifference = timeDifference / (1000 * 60 * 60);
-
-    console.log("UPDATE BOOKING DEBUG:");
-    console.log("Booking Start:", bookingStartTime.toISOString());
-    console.log("Current Time:", currentTime.toISOString());
-    console.log("Diff (hours):", hoursDifference);
-
-    if (hoursDifference < 1) {
-      console.log("UPDATE REJECTED: Too close to start time");
-      return res.status(400).json({
-        success: false,
-        message:
-          "Booking cannot be modified less than 1 hour before start time",
       });
     }
 
@@ -80,7 +62,7 @@ export const updateBooking = async (req: Request, res: Response) => {
       ? parseInt(duration)
       : existingBooking.duration;
 
-    // Check if field exists and get price
+    // Check if field exists and is active
     const field = await prisma.field.findUnique({
       where: { id: newFieldId },
     });
@@ -110,17 +92,11 @@ export const updateBooking = async (req: Request, res: Response) => {
         id: { not: parseInt(id) },
         OR: [
           {
-            start_time: {
-              lt: newEndTime,
-            },
-            end_time: {
-              gt: newStartTime,
-            },
+            start_time: { lt: newEndTime },
+            end_time: { gt: newStartTime },
           },
         ],
-        status: {
-          in: ["confirmed", "pending"],
-        },
+        status: { in: ["confirmed", "pending"] },
       },
     });
 
@@ -133,9 +109,7 @@ export const updateBooking = async (req: Request, res: Response) => {
 
     // Update booking
     const updatedBooking = await prisma.bookings.update({
-      where: {
-        id: parseInt(id),
-      },
+      where: { id: parseInt(id) },
       data: {
         field_id: newFieldId,
         booking_date: newBookingDate,
@@ -143,7 +117,6 @@ export const updateBooking = async (req: Request, res: Response) => {
         end_time: newEndTime,
         duration: newDuration,
         total_price: newTotalPrice,
-        // Tidak ada updated_at field, jadi tidak di-update
       },
       include: {
         field: {

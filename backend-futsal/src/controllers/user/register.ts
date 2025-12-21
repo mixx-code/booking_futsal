@@ -3,39 +3,69 @@ import { hashPassword } from "../../utils/bcrypt";
 import { signToken } from "../../utils/jwt";
 import { prisma } from "../../prisma/client";
 
+/**
+ * User registration
+ * Creates new user account and returns JWT token
+ */
 export const register = async (req: Request, res: Response) => {
-  console.log("REGISTER BODY:", req.body);
-  const { email, full_name, password, phone, role } = req.body;
+  try {
+    const { email, full_name, password, phone, role } = req.body;
 
-  const passwordHash = await hashPassword(password);
+    if (!email || !full_name || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Email, full_name, and password are required",
+      });
+    }
 
-  const createUser = await prisma.users.create({
-    data: {
-      email,
-      full_name,
-      password: passwordHash,
-      phone,
-      role: role || "customer",
-    },
-  });
+    // Check if email already exists
+    const existingUser = await prisma.users.findUnique({
+      where: { email },
+    });
 
-  const token = signToken({
-    id: createUser.id,
-    email: createUser.email,
-    role: createUser.role,
-  });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: "Email already registered",
+      });
+    }
 
-  return res.status(201).json({
-    code: 200,
-    status: "success",
-    message: "Registrasi berhasil. Akun berhasil dibuat.",
-    data: {
-      user_id: createUser.id,
-      full_name: createUser.password,
-      email: createUser.email,
-      phone: createUser.phone,
-      role: createUser.role,
-    },
-    token: token,
-  });
+    const passwordHash = await hashPassword(password);
+
+    const newUser = await prisma.users.create({
+      data: {
+        email,
+        full_name,
+        password: passwordHash,
+        phone,
+        role: role || "customer",
+      },
+    });
+
+    const token = signToken({
+      id: newUser.id,
+      email: newUser.email,
+      role: newUser.role,
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Registrasi berhasil. Akun berhasil dibuat.",
+      data: {
+        user_id: newUser.id,
+        full_name: newUser.full_name,
+        email: newUser.email,
+        phone: newUser.phone,
+        role: newUser.role,
+      },
+      token,
+    });
+  } catch (error) {
+    console.error("Register error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error creating account",
+      error: error instanceof Error ? error.message : error,
+    });
+  }
 };

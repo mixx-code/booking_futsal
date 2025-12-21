@@ -1,6 +1,104 @@
 // API Service Layer for Backend Integration
 
-const API_BASE = "http://localhost:3000/api/v1";
+const API_BASE = "/api/v1";
+
+// Error message translations from English to Indonesian
+const errorTranslations: Record<string, string> = {
+  // Auth errors
+  "Email and password are required": "Email dan password harus diisi",
+  "User not found": "Pengguna tidak ditemukan",
+  "Email atau password salah": "Email atau password salah",
+  "Internal server error": "Terjadi kesalahan server",
+  "Email, full_name, and password are required":
+    "Email, nama lengkap, dan password harus diisi",
+  "Email already registered": "Email sudah terdaftar",
+  "Error creating account": "Gagal membuat akun",
+  "User not authenticated": "Pengguna tidak terautentikasi",
+
+  // Field errors
+  "Only admin can create fields": "Hanya admin yang dapat membuat lapangan",
+  "Only admin can delete fields": "Hanya admin yang dapat menghapus lapangan",
+  "Field created successfully": "Lapangan berhasil dibuat",
+  "Error creating field": "Gagal membuat lapangan",
+  "Field updated successfully": "Lapangan berhasil diperbarui",
+  "Field not found": "Lapangan tidak ditemukan",
+  "Error updating field": "Gagal memperbarui lapangan",
+  "Field deleted successfully": "Lapangan berhasil dihapus",
+  "Error deleting field": "Gagal menghapus lapangan",
+  "Error fetching field": "Gagal mengambil data lapangan",
+  "Error fetching fields": "Gagal mengambil data lapangan",
+  "Date parameter is required": "Parameter tanggal diperlukan",
+  "Field is not available on this day": "Lapangan tidak tersedia pada hari ini",
+  "Error fetching available slots": "Gagal mengambil slot tersedia",
+  "Field is not available for booking": "Lapangan tidak tersedia untuk booking",
+
+  // Booking errors
+  "All fields are required": "Semua field harus diisi",
+  "Time slot is already booked": "Slot waktu sudah dibooking",
+  "Booking created successfully": "Booking berhasil dibuat",
+  "Error creating booking": "Gagal membuat booking",
+  "Booking not found or unauthorized":
+    "Booking tidak ditemukan atau tidak memiliki akses",
+  "Booking not found": "Booking tidak ditemukan",
+  "Error fetching booking details": "Gagal mengambil detail booking",
+  "Error fetching bookings": "Gagal mengambil data booking",
+  "Booking updated successfully": "Booking berhasil diperbarui",
+  "Error updating booking": "Gagal memperbarui booking",
+  "Booking is already cancelled": "Booking sudah dibatalkan",
+  "Cannot cancel completed booking":
+    "Tidak dapat membatalkan booking yang sudah selesai",
+  "Booking cancelled successfully": "Booking berhasil dibatalkan",
+  "Error cancelling booking": "Gagal membatalkan booking",
+  "Only admin can confirm bookings":
+    "Hanya admin yang dapat mengkonfirmasi booking",
+  "Only pending bookings can be confirmed":
+    "Hanya booking dengan status menunggu yang dapat dikonfirmasi",
+  "Booking confirmed successfully": "Booking berhasil dikonfirmasi",
+  "Error confirming booking": "Gagal mengkonfirmasi booking",
+  "Only admin can reject bookings": "Hanya admin yang dapat menolak booking",
+  "Only pending bookings can be rejected":
+    "Hanya booking dengan status menunggu yang dapat ditolak",
+  "Booking rejected successfully": "Booking berhasil ditolak",
+  "Error rejecting booking": "Gagal menolak booking",
+
+  // Schedule errors
+  "Only admin can create schedules": "Hanya admin yang dapat membuat jadwal",
+  "field_id, day_of_week, start_time, and end_time are required":
+    "field_id, day_of_week, start_time, dan end_time harus diisi",
+  "day_of_week must be between 0 (Sunday) and 6 (Saturday)":
+    "day_of_week harus antara 0 (Minggu) dan 6 (Sabtu)",
+  "start_time must be before end_time": "start_time harus sebelum end_time",
+  "Schedule created successfully": "Jadwal berhasil dibuat",
+  "Error creating schedule": "Gagal membuat jadwal",
+};
+
+// Function to translate error messages
+export function translateError(message: string): string {
+  // Check exact match first
+  if (errorTranslations[message]) {
+    return errorTranslations[message];
+  }
+
+  // Check for partial matches (for dynamic messages like "Schedule already exists for day X")
+  if (message.includes("Schedule already exists for day")) {
+    const dayMatch = message.match(/day (\d)/);
+    if (dayMatch) {
+      return `Jadwal sudah ada untuk hari ke-${dayMatch[1]}`;
+    }
+  }
+
+  if (message.includes("Cannot modify")) {
+    if (message.includes("cancelled")) {
+      return "Tidak dapat mengubah booking yang dibatalkan";
+    }
+    if (message.includes("completed")) {
+      return "Tidak dapat mengubah booking yang sudah selesai";
+    }
+  }
+
+  // Return original if no translation found
+  return message;
+}
 
 // Types matching backend response
 export interface User {
@@ -246,6 +344,33 @@ export async function deleteField(fieldId: number): Promise<void> {
   }
 }
 
+export async function updateField(
+  fieldId: number,
+  data: FormData
+): Promise<Field> {
+  const token = getToken();
+
+  if (!token) {
+    throw new Error("Not authenticated");
+  }
+
+  const res = await fetch(`${API_BASE}/update-field/${fieldId}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: data,
+  });
+
+  const result: ApiResponse<Field> = await res.json();
+
+  if (!result.success || !result.data) {
+    throw new Error(result.message || "Failed to update field");
+  }
+
+  return result.data;
+}
+
 export async function createSchedule(params: {
   field_id: number;
   day_of_week: number;
@@ -296,7 +421,7 @@ export async function getAvailableSlots(
     `${API_BASE}/get-available-slots/${fieldId}?date=${date}`
   );
   const data: ApiResponse<AvailableSlot[]> = await res.json();
-
+  console.log("available slots", data);
   if (!data.success) {
     throw new Error(data.message || "Failed to fetch available slots");
   }
@@ -475,15 +600,69 @@ export async function getAllBookings(): Promise<Booking[]> {
   return response.bookings;
 }
 
+// Admin: Confirm a pending booking
+export async function confirmBooking(bookingId: number): Promise<Booking> {
+  const token = getToken();
+
+  if (!token) {
+    throw new Error("Not authenticated");
+  }
+
+  const res = await fetch(`${API_BASE}/bookings/${bookingId}/confirm`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data: ApiResponse<Booking> = await res.json();
+
+  if (!data.success || !data.data) {
+    throw new Error(data.message || "Failed to confirm booking");
+  }
+
+  return data.data;
+}
+
+// Admin: Reject a pending booking
+export async function rejectBooking(bookingId: number): Promise<Booking> {
+  const token = getToken();
+
+  if (!token) {
+    throw new Error("Not authenticated");
+  }
+
+  const res = await fetch(`${API_BASE}/bookings/${bookingId}/reject`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data: ApiResponse<Booking> = await res.json();
+
+  if (!data.success || !data.data) {
+    throw new Error(data.message || "Failed to reject booking");
+  }
+
+  return data.data;
+}
+
+// Update booking status (for backward compatibility)
 export async function updateBookingStatus(
   bookingId: number,
   status: string
 ): Promise<Booking> {
-  // Only cancel is supported now
+  if (status === "confirmed") {
+    return confirmBooking(bookingId);
+  }
+  if (status === "rejected") {
+    return rejectBooking(bookingId);
+  }
   if (status === "cancelled") {
     return cancelBooking(bookingId);
   }
-  throw new Error("Only cancellation is supported for users");
+  throw new Error("Invalid status");
 }
 
 // Helper to format price from backend (Decimal)

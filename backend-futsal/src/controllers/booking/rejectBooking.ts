@@ -2,10 +2,13 @@ import { Request, Response } from "express";
 import { prisma } from "../../prisma/client";
 import { verifyToken } from "../../utils/jwt";
 
-export const updateBookingStatus = async (req: Request, res: Response) => {
+/**
+ * Reject a booking (admin only)
+ * Admin can reject pending bookings
+ */
+export const rejectBooking = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
     const token = req.headers.authorization?.split(" ")[1];
 
     if (!token) {
@@ -15,18 +18,17 @@ export const updateBookingStatus = async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = verifyToken(String(token));
+    const decoded = verifyToken(token);
 
-    // Validate status
-    const validStatuses = ["pending", "confirmed", "cancelled", "completed"];
-    if (!validStatuses.includes(status)) {
-      return res.status(400).json({
+    // Only admin can reject bookings
+    if (decoded.role !== "admin") {
+      return res.status(403).json({
         success: false,
-        message: "Invalid status",
+        message: "Only admin can reject bookings",
       });
     }
 
-    // Get the booking
+    // Find booking
     const booking = await prisma.bookings.findUnique({
       where: { id: parseInt(id) },
     });
@@ -38,51 +40,45 @@ export const updateBookingStatus = async (req: Request, res: Response) => {
       });
     }
 
-    // Check permission: admin can update any, customer can only cancel their own
-    if (decoded.role !== "admin") {
-      if (booking.customer_id !== decoded.id) {
-        return res.status(403).json({
-          success: false,
-          message: "Access denied",
-        });
-      }
-      // Customer can only cancel
-      if (status !== "cancelled") {
-        return res.status(403).json({
-          success: false,
-          message: "You can only cancel your booking",
-        });
-      }
+    // Only pending bookings can be rejected
+    if (booking.status !== "pending") {
+      return res.status(400).json({
+        success: false,
+        message: "Only pending bookings can be rejected",
+      });
     }
 
-    const updatedBooking = await prisma.bookings.update({
+    // Reject the booking
+    const rejectedBooking = await prisma.bookings.update({
       where: { id: parseInt(id) },
-      data: { status },
+      data: { status: "rejected" },
       include: {
         field: {
           select: {
             name: true,
             field_type: true,
+            price_per_hour: true,
           },
         },
         customer: {
           select: {
             full_name: true,
             email: true,
+            phone: true,
           },
         },
       },
     });
 
-    res.json({
+    res.status(200).json({
       success: true,
-      message: "Booking status updated",
-      data: updatedBooking,
+      message: "Booking rejected successfully",
+      data: rejectedBooking,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Error updating booking",
+      message: "Error rejecting booking",
       error: error instanceof Error ? error.message : error,
     });
   }

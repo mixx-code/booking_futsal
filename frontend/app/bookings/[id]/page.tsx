@@ -12,6 +12,7 @@ import {
   formatDate,
   formatPrice,
   formatTime,
+  translateError,
   Booking,
   AvailableSlot,
 } from "../../lib/api";
@@ -31,7 +32,10 @@ export default function BookingDetailPage() {
   // Reschedule State
   const [showReschedule, setShowReschedule] = useState(false);
   const [rescheduleDate, setRescheduleDate] = useState("");
-  const [rescheduleTime, setRescheduleTime] = useState("");
+  const [rescheduleStartSlot, setRescheduleStartSlot] =
+    useState<AvailableSlot | null>(null);
+  const [rescheduleEndSlot, setRescheduleEndSlot] =
+    useState<AvailableSlot | null>(null);
   const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([]);
   const [checkingSlots, setCheckingSlots] = useState(false);
 
@@ -51,7 +55,7 @@ export default function BookingDetailPage() {
         // Set initial reschedule date to current booking date
         setRescheduleDate(bookingData.booking_date.split("T")[0]);
       } catch (err: any) {
-        setError(err.message || "Booking tidak ditemukan");
+        setError(translateError(err.message) || "Booking tidak ditemukan");
       } finally {
         setLoading(false);
       }
@@ -95,7 +99,11 @@ export default function BookingDetailPage() {
       label: "Dikonfirmasi",
       className: "bg-green-100 text-green-800",
     },
-    cancelled: { label: "Dibatalkan", className: "bg-red-100 text-red-800" },
+    cancelled: {
+      label: "Dibatalkan",
+      className: "bg-orange-100 text-orange-800",
+    },
+    rejected: { label: "Ditolak Admin", className: "bg-red-100 text-red-800" },
     completed: { label: "Selesai", className: "bg-gray-100 text-gray-800" },
   };
 
@@ -108,36 +116,105 @@ export default function BookingDetailPage() {
       setShowCancel(false);
       alert("Booking berhasil dibatalkan");
     } catch (err: any) {
-      alert(err.message || "Gagal membatalkan booking");
+      alert(translateError(err.message) || "Gagal membatalkan booking");
     } finally {
       setSubmitting(false);
     }
   }
 
+  // Check if slots between two indices are consecutive (no gaps)
+  function areSlotsConsecutive(startIdx: number, endIdx: number): boolean {
+    const minIdx = Math.min(startIdx, endIdx);
+    const maxIdx = Math.max(startIdx, endIdx);
+
+    for (let i = minIdx; i < maxIdx; i++) {
+      const currentSlot = new Date(availableSlots[i].end_time);
+      const nextSlot = new Date(availableSlots[i + 1].start_time);
+
+      if (currentSlot.getTime() !== nextSlot.getTime()) {
+        return false; // There's a gap
+      }
+    }
+    return true;
+  }
+
+  // Handle slot click for reschedule
+  function handleRescheduleSlotClick(slot: AvailableSlot) {
+    if (!rescheduleStartSlot) {
+      setRescheduleStartSlot(slot);
+      setRescheduleEndSlot(null);
+    } else if (!rescheduleEndSlot) {
+      const startIndex = availableSlots.findIndex(
+        (s) => s.start_time === rescheduleStartSlot.start_time
+      );
+      const clickIndex = availableSlots.findIndex(
+        (s) => s.start_time === slot.start_time
+      );
+
+      // Check if same slot is clicked
+      if (startIndex === clickIndex) {
+        // Same slot clicked - set as 1-hour booking (start = end)
+        setRescheduleEndSlot(slot);
+        return;
+      }
+
+      // Check if slots are consecutive
+      if (!areSlotsConsecutive(startIndex, clickIndex)) {
+        alert(
+          "Tidak dapat memilih rentang waktu yang tidak berurutan. Silakan pilih slot yang berurutan."
+        );
+        setRescheduleStartSlot(slot);
+        setRescheduleEndSlot(null);
+        return;
+      }
+
+      if (clickIndex < startIndex) {
+        setRescheduleEndSlot(rescheduleStartSlot);
+        setRescheduleStartSlot(slot);
+      } else {
+        setRescheduleEndSlot(slot);
+      }
+    } else {
+      setRescheduleStartSlot(slot);
+      setRescheduleEndSlot(null);
+    }
+  }
+
+  // Calculate reschedule duration
+  const rescheduleDuration =
+    rescheduleStartSlot && rescheduleEndSlot
+      ? Math.abs(
+          availableSlots.findIndex(
+            (s) => s.start_time === rescheduleEndSlot.start_time
+          ) -
+            availableSlots.findIndex(
+              (s) => s.start_time === rescheduleStartSlot.start_time
+            )
+        ) + 1
+      : 0;
+
   async function handleReschedule() {
-    if (!booking || !rescheduleDate || !rescheduleTime) return;
+    if (
+      !booking ||
+      !rescheduleDate ||
+      !rescheduleStartSlot ||
+      !rescheduleEndSlot
+    )
+      return;
 
     setSubmitting(true);
     try {
-      const startTime = `${rescheduleDate} ${rescheduleTime}:00`;
-      // Calculate end time based on original duration
-      const startHour = parseInt(rescheduleTime.split(":")[0]);
-      const endHour = startHour + booking.duration;
-      const endTime = `${rescheduleDate} ${endHour
-        .toString()
-        .padStart(2, "0")}:00:00`;
-
       const updatedBooking = await updateBooking(booking.id, {
         booking_date: rescheduleDate,
-        start_time: startTime,
-        end_time: endTime,
+        start_time: rescheduleStartSlot.start_time,
+        end_time: rescheduleEndSlot.end_time,
       });
 
       setBooking(updatedBooking);
       setShowReschedule(false);
       alert("Jadwal booking berhasil diubah");
     } catch (err: any) {
-      alert(err.message || "Gagal mengubah jadwal booking");
+      alert(translateError(err.message) || "Gagal mengubah jadwal booking");
     } finally {
       setSubmitting(false);
     }
@@ -159,10 +236,10 @@ export default function BookingDetailPage() {
             {error || "Booking tidak ditemukan"}
           </h1>
           <Link
-            href="/bookings"
+            href="/dashboard/user"
             className="text-gray-600 hover:text-gray-900 underline"
           >
-            Kembali ke daftar booking
+            Kembali ke Dashboard
           </Link>
         </div>
       </div>
@@ -180,7 +257,7 @@ export default function BookingDetailPage() {
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center gap-4">
             <Link
-              href="/bookings"
+              href="/dashboard/user"
               className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -312,7 +389,7 @@ export default function BookingDetailPage() {
               onClick={() => setShowReschedule(true)}
               className="flex-1 px-4 py-3 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
             >
-              Reschedule
+              Ubah Jadwal
             </button>
           </div>
         )}
@@ -350,7 +427,7 @@ export default function BookingDetailPage() {
             <div className="bg-white rounded-xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-bold text-gray-900">
-                  Reschedule Booking
+                  Ubah Jadwal Booking
                 </h3>
                 <button
                   onClick={() => setShowReschedule(false)}
@@ -377,7 +454,12 @@ export default function BookingDetailPage() {
                   <input
                     type="date"
                     value={rescheduleDate}
-                    onChange={(e) => setRescheduleDate(e.target.value)}
+                    onChange={(e) => {
+                      setRescheduleDate(e.target.value);
+                      // Reset slot selections when date changes
+                      setRescheduleStartSlot(null);
+                      setRescheduleEndSlot(null);
+                    }}
                     min={new Date().toISOString().split("T")[0]}
                     className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-900 outline-none"
                   />
@@ -385,7 +467,10 @@ export default function BookingDetailPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Pilih Jam Mulai (Durasi: {booking.duration} jam)
+                    Pilih Waktu Baru
+                    <span className="block text-xs text-gray-500 font-normal mt-1">
+                      Klik pertama: jam mulai, Klik kedua: jam selesai
+                    </span>
                   </label>
 
                   {checkingSlots ? (
@@ -397,25 +482,113 @@ export default function BookingDetailPage() {
                       Tidak ada slot tersedia untuk tanggal ini
                     </div>
                   ) : (
-                    <div className="grid grid-cols-4 gap-2">
-                      {availableSlots.map((slot, idx) => {
-                        const timeString = slot.start_time.substring(11, 16);
-                        return (
-                          <button
-                            key={idx}
-                            data-testid={`time-slot-${timeString}`}
-                            onClick={() => setRescheduleTime(timeString)}
-                            className={`px-2 py-2 text-sm rounded-lg border transition-colors ${
-                              rescheduleTime === timeString
-                                ? "bg-gray-900 text-white border-gray-900"
-                                : "bg-white text-gray-700 border-gray-200 hover:border-gray-900"
-                            }`}
-                          >
-                            {timeString}
-                          </button>
-                        );
-                      })}
-                    </div>
+                    <>
+                      <div className="grid grid-cols-4 gap-2">
+                        {availableSlots.map((slot, idx) => {
+                          const timeLabel = formatTime(slot.start_time);
+
+                          // Check if slot has already passed
+                          const today = new Date().toISOString().split("T")[0];
+                          const now = new Date();
+                          const slotDate = new Date(slot.start_time);
+                          const isPassed =
+                            rescheduleDate === today && slotDate <= now;
+
+                          // Check selection states
+                          const isStart =
+                            rescheduleStartSlot?.start_time === slot.start_time;
+                          const isEnd =
+                            rescheduleEndSlot?.start_time === slot.start_time;
+
+                          // Check if slot is in range
+                          let isInRange = false;
+                          if (rescheduleStartSlot && rescheduleEndSlot) {
+                            const startIdx = availableSlots.findIndex(
+                              (s) =>
+                                s.start_time === rescheduleStartSlot.start_time
+                            );
+                            const endIdx = availableSlots.findIndex(
+                              (s) =>
+                                s.start_time === rescheduleEndSlot.start_time
+                            );
+                            isInRange =
+                              idx > Math.min(startIdx, endIdx) &&
+                              idx < Math.max(startIdx, endIdx);
+                          }
+
+                          return (
+                            <button
+                              key={idx}
+                              data-testid={`time-slot-${timeLabel}`}
+                              onClick={() =>
+                                !isPassed && handleRescheduleSlotClick(slot)
+                              }
+                              disabled={isPassed}
+                              className={`px-2 py-2 text-sm rounded-lg border transition-colors ${
+                                isPassed
+                                  ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                                  : isStart
+                                  ? "bg-green-600 text-white border-green-600"
+                                  : isEnd
+                                  ? "bg-blue-600 text-white border-blue-600"
+                                  : isInRange
+                                  ? "bg-gray-200 text-gray-900 border-gray-300"
+                                  : "bg-white text-gray-700 border-gray-200 hover:border-gray-900"
+                              }`}
+                            >
+                              <div className="flex flex-col items-center">
+                                <span>{timeLabel}</span>
+                                {isPassed && (
+                                  <span className="text-xs">(lewat)</span>
+                                )}
+                                {isStart && !isPassed && (
+                                  <span className="text-xs">Mulai</span>
+                                )}
+                                {isEnd && !isPassed && (
+                                  <span className="text-xs">Selesai</span>
+                                )}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Duration Preview */}
+                      {rescheduleDuration > 0 && (
+                        <div className="mt-3 bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-700">
+                          <strong>Waktu:</strong>{" "}
+                          {formatTime(rescheduleStartSlot?.start_time || "")} -{" "}
+                          {formatTime(rescheduleEndSlot?.end_time || "")}
+                          <span className="ml-2">
+                            ({rescheduleDuration} jam)
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Legend */}
+                      <div className="mt-3 flex flex-wrap gap-3 text-xs text-gray-500">
+                        <div className="flex items-center gap-1">
+                          <span className="w-3 h-3 rounded bg-white border border-gray-200"></span>
+                          <span>Tersedia</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="w-3 h-3 rounded bg-green-600"></span>
+                          <span>Mulai</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="w-3 h-3 rounded bg-blue-600"></span>
+                          <span>Selesai</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="w-3 h-3 rounded bg-gray-200 border border-gray-300"></span>
+                          <span>Rentang</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="w-3 h-3 rounded bg-gray-100 border border-gray-200"></span>
+                          <span>Sudah Lewat</span>
+                        </div>
+                      </div>
+                    </>
                   )}
                 </div>
 
@@ -429,7 +602,9 @@ export default function BookingDetailPage() {
                   <button
                     data-testid="save-reschedule"
                     onClick={handleReschedule}
-                    disabled={submitting || !rescheduleTime}
+                    disabled={
+                      submitting || !rescheduleStartSlot || !rescheduleEndSlot
+                    }
                     className="flex-1 px-4 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {submitting ? "Menyimpan..." : "Simpan Perubahan"}
